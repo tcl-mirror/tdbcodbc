@@ -2480,7 +2480,7 @@ StatementConstructor(
 	 * of parameters.  Since not all drivers do WVARCHAR, VARCHAR
 	 * appears to be the only workable option.
 	 */
-	if (cdata->flags && CONNECTION_FLAG_HAS_WVARCHAR) {
+	if (cdata->flags & CONNECTION_FLAG_HAS_WVARCHAR) {
 	    sdata->params[j].dataType = SQL_WVARCHAR;
 	} else {
 	    sdata->params[j].dataType = SQL_VARCHAR;
@@ -2534,7 +2534,7 @@ StatementConstructor(
 		 * handle WVARCHAR, so VARCHAR seems to be the only
 		 * workable option.
 		 */
-		if (cdata->flags && CONNECTION_FLAG_HAS_WVARCHAR) {
+		if (cdata->flags & CONNECTION_FLAG_HAS_WVARCHAR) {
 		    sdata->params[i].dataType = SQL_WVARCHAR;
 		} else {
 		    sdata->params[i].dataType = SQL_VARCHAR;
