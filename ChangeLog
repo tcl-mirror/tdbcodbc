@@ -1,3 +1,13 @@
+2015-01-23  Don Porter  <dgp@users.sourceforge.net>
+
+	* configure.in:
+	* README:	Advanced version number to 1.0.3.
+	* configure: 	TEA update; autoconf-2.69.
+
+2014-10-27  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tdbcodbc.c:	Used && instead of &.
+
 2014-10-23  Don Porter  <dgp@users.sourceforge.net>
 
 	* configure.in:
