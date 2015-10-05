@@ -4,7 +4,7 @@
  *	Stubs tables for the foreign ODBC libraries so that
  *	Tcl extensions can use them without the linker's knowing about them.
  *
- * @CREATED@ 2011-01-22 20:11:52Z by genExtStubs.tcl from ../generic/odbcStubDefs.txt
+ * @CREATED@ 2015-06-26 13:54:02Z by genExtStubs.tcl from ../generic/odbcStubDefs.txt
  *
  * Copyright (c) 2010 by Kevin B. Kenny.
  *
@@ -35,7 +35,7 @@ static const char *const odbcStubLibNames[] = {
     /* @END@ */
 };
 static const char *const odbcOptLibNames[] = {
-    "odbccp", "odbccp32", "odbcinst", 
+    "odbccp", "odbccp32", "odbcinst",
     "libodbccp", "libodbccp32", "libodbcinst", NULL
 };
 
@@ -84,7 +84,7 @@ static const char *const odbcSymbolNames[] = {
  */
 
 static odbcStubDefs odbcStubsTable;
-odbcStubDefs* odbcStubs = &odbcStubsTable;
+const odbcStubDefs* odbcStubs = &odbcStubsTable;
 
 /*
  * Pointers to optional functions in ODBCINST
@@ -168,7 +168,7 @@ OdbcInitStubs(Tcl_Interp* interp,
 	    Tcl_IncrRefCount(path);
 	    status2 = Tcl_LoadFile(interp, path, NULL, 0, NULL, handle2Ptr);
 	    if (status2 == TCL_OK) {
-		SQLConfigDataSourceW = 
+		SQLConfigDataSourceW =
 		    (BOOL (INSTAPI*)(HWND, WORD, LPCWSTR, LPCWSTR))
 		    Tcl_FindSymbol(NULL, *handle2Ptr, "SQLConfigDataSourceW");
 		if (SQLConfigDataSourceW == NULL) {
@@ -187,8 +187,8 @@ OdbcInitStubs(Tcl_Interp* interp,
 	}
     }
 
-    /* 
-     * Either we've successfully loaded a library (status == TCL_OK), 
+    /*
+     * Either we've successfully loaded a library (status == TCL_OK),
      * or we've run out of library names (in which case status==TCL_ERROR
      * and the error message reflects the last unsuccessful load attempt).
      */

@@ -96,12 +96,12 @@ typedef struct PerInterpData {
 #define DecrPerInterpRefCount(x)		\
     do {					\
 	PerInterpData* _pidata = x;		\
-	if ((--(_pidata->refCount)) <= 0) {	\
+	if (_pidata->refCount-- <= 1) {	\
 	    DeletePerInterpData(_pidata);	\
 	}					\
     } while(0)
 
-/* 
+/*
  * Structure that carries the data for an ODBC connection
  *
  * 	The ConnectionData structure is refcounted to simplify the
@@ -145,7 +145,7 @@ typedef struct ConnectionData {
 #define DecrConnectionRefCount(x)		\
     do {					\
 	ConnectionData* conn = x;		\
-	if ((--(conn->refCount)) <= 0) {	\
+	if (conn->refCount-- <= 1) {	\
 	    DeleteConnection(conn);		\
 	}					\
     } while(0)
@@ -166,7 +166,7 @@ typedef struct StatementData {
     ConnectionData* cdata;	/* Data for the connection to which this
 				 * statement pertains. */
     Tcl_Obj* subVars;	        /* List of variables to be substituted, in the
-				 * order in which they appear in the 
+				 * order in which they appear in the
 				 * statement */
     SQLHSTMT hStmt;		/* Handle to the ODBC statement */
     SQLWCHAR* nativeSqlW;	/* SQL statement as wide chars */
@@ -175,7 +175,7 @@ typedef struct StatementData {
 				/* Match pattern for metadata queries */
     int nativeMatchPatLen;	/* Length of the match pattern */
     struct ParamData* params;	/* Pointer to an array of ParamData
-				 * structures that describe the data types 
+				 * structures that describe the data types
 				 * of substituted parameters. */
     int typeNum;		/* Type number for a query of data types */
     int flags;			/* Flags tracking the state of the
@@ -188,7 +188,7 @@ typedef struct StatementData {
 #define DecrStatementRefCount(x)		\
     do {					\
 	StatementData* stmt = (x);		\
-	if (--(stmt->refCount) <= 0) {		\
+	if (stmt->refCount-- <= 1) {		\
 	    DeleteStatement(stmt);		\
 	}					\
     } while(0)
@@ -197,7 +197,7 @@ typedef struct StatementData {
 
 #define STATEMENT_FLAG_HSTMT_BUSY 0x1
 				/* This flag is set if hStmt is in use, in
-				 * which case the progam must clone it if 
+				 * which case the progam must clone it if
 				 * another result set is needed */
 /*
  * Stored procedure calls and statements that return multiple
@@ -256,7 +256,7 @@ typedef struct ParamData {
  */
 
 typedef struct ResultSetData {
-    int refCount;		/* Reference count */
+    size_t refCount;		/* Reference count */
     StatementData* sdata;	/* Statement that generated this result set */
     SQLHSTMT hStmt;		/* Handle to the ODBC statement object */
     SQLCHAR** bindStrings;	/* Buffers for binding string parameters */
@@ -274,7 +274,7 @@ typedef struct ResultSetData {
 #define DecrResultSetRefCount(x)		\
     do {					\
 	ResultSetData* rs = (x);		\
-	if (--(rs->refCount) <= 0) {		\
+	if (rs->refCount-- <= 1) {		\
 	    DeleteResultSet(rs);		\
 	}					\
     } while(0)
@@ -333,7 +333,7 @@ const static OdbcConstant OdbcIsolationLevels[] = {
     { "serializable",		SQL_TXN_SERIALIZABLE },
     { NULL,			0 }
 };
-	    
+
 const static OdbcConstant OdbcErrorCodeNames[] = {
     { "GENERAL_ERR",			ODBC_ERROR_GENERAL_ERR },
     { "INVALID_BUFF_LEN",		ODBC_ERROR_INVALID_BUFF_LEN },
@@ -380,7 +380,7 @@ static void DismissHEnv(void);
 static SQLHSTMT AllocAndPrepareStatement(Tcl_Interp* interp,
 					  StatementData* sdata);
 static int GetResultSetDescription(Tcl_Interp* interp, ResultSetData* rdata);
-static int ConfigureConnection(Tcl_Interp* interp, 
+static int ConfigureConnection(Tcl_Interp* interp,
 			       SQLHDBC hDBC,
 			       PerInterpData* pidata,
 			       int objc, Tcl_Obj *CONST objv[],
@@ -466,7 +466,7 @@ static int ResultSetNextrowMethod(ClientData clientData, Tcl_Interp* interp,
 static int ResultSetNextresultsMethod(ClientData clientData, Tcl_Interp* interp,
 				      Tcl_ObjectContext context,
 				      int objc, Tcl_Obj *const objv[]);
-static int GetCell(ResultSetData* rdata, Tcl_Interp* interp, 
+static int GetCell(ResultSetData* rdata, Tcl_Interp* interp,
 		   int columnIndex, Tcl_Obj** retval);
 static int ResultSetRowcountMethod(ClientData clientData, Tcl_Interp* interp,
 				   Tcl_ObjectContext context,
@@ -570,7 +570,7 @@ const static Tcl_MethodType ConnectionHasWvarcharMethodType = {
     CloneCmd			/* cloneProc */
 };
 
-/* 
+/*
  * Methods to create on the connection class. Note that 'init', 'commit' and
  * 'rollback' are all special because they have non-NULL clientData.
  */
@@ -618,8 +618,8 @@ const static Tcl_MethodType StatementParamtypeMethodType = {
     NULL			/* cloneProc */
 };
 
-/* 
- * Methods to create on the statement class. 
+/*
+ * Methods to create on the statement class.
  */
 
 const static Tcl_MethodType* StatementMethods[] = {
@@ -796,7 +796,7 @@ DStringAppendWChars(
  *	for freeing.
  *
  * Side effects:
- *	Stores the length of the string in '*lengthPtr' if 'lengthPtr' 
+ *	Stores the length of the string in '*lengthPtr' if 'lengthPtr'
  *	is not NULL
  *
  *-----------------------------------------------------------------------------
@@ -811,7 +811,7 @@ GetWCharStringFromObj(
 				/* Length of the input string in characters */
     SQLWCHAR* retval = (SQLWCHAR*) ckalloc((len + 1) * sizeof(SQLWCHAR));
 				/* Buffer to hold the converted string */
-    char* bytes = Tcl_GetStringFromObj(obj, NULL);
+    char* bytes = Tcl_GetString(obj);
 				/* UTF-8 representation of the input string */
     int i;
     Tcl_UniChar ch;
@@ -906,7 +906,7 @@ TransferSQLError(
 	Tcl_DStringFree(&bufferDS);
 	sep = "\n";
 	++i;
-    }					       
+    }
     if (info != NULL) {
 	Tcl_AppendToObj(resultObj, "\n", -1);
 	Tcl_AppendToObj(resultObj, info, -1);
@@ -933,7 +933,7 @@ TransferSQLError(
  * (Optional Function Not Implemented), but may also be used for
  * other states such as "HYT00" (Timeout Expired), "HY008"
  * (Operation Cancelled), "01004" (Data Truncated) and "01S02"
- * (Option Value Changed). 
+ * (Option Value Changed).
  *
  *-----------------------------------------------------------------------------
  */
@@ -999,7 +999,7 @@ LookupOdbcConstant(
 }
 
 static inline int LookupOdbcType(
-    Tcl_Interp* interp, 
+    Tcl_Interp* interp,
     Tcl_Obj* name,
     SQLSMALLINT* valuePtr
 ) {
@@ -1071,7 +1071,7 @@ GetHEnv(
 	    Tcl_MutexUnlock(&hEnvMutex);
 	    return SQL_NULL_HENV;
 	}
-	/* 
+	/*
 	 * Allocate the ODBC environment
 	 */
 	rc = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &hEnv);
@@ -1162,7 +1162,7 @@ AllocAndPrepareStatement(
     SQLRETURN rc;
     SQLHSTMT hStmt;
     ConnectionData* cdata = sdata->cdata;
-    if (sdata->flags & (STATEMENT_FLAG_TABLES 
+    if (sdata->flags & (STATEMENT_FLAG_TABLES
 			| STATEMENT_FLAG_COLUMNS
 			| STATEMENT_FLAG_PRIMARYKEYS
 			| STATEMENT_FLAG_FOREIGNKEYS
@@ -1173,7 +1173,7 @@ AllocAndPrepareStatement(
     }
     rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &hStmt);
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC, 
+	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
 			 "(allocating statement handle)");
 	return SQL_NULL_HSTMT;
     }
@@ -1199,7 +1199,7 @@ AllocAndPrepareStatement(
  *	interpreter result if a failure occurs.
  *
  * Side effects:
- *	Stores column names and type information in 'sdata' and 
+ *	Stores column names and type information in 'sdata' and
  *	updates the flags to indicate that the data are present.
  *
  *-----------------------------------------------------------------------------
@@ -1216,7 +1216,7 @@ GetResultSetDescription(
     Tcl_Obj* colNames;		/* List of the column names */
     SQLSMALLINT nColumns;	/* Number of result set columns */
     SQLWCHAR colNameBuf[40];	/* Buffer to hold the column name */
-    SQLSMALLINT colNameLen = 40; 
+    SQLSMALLINT colNameLen = 40;
 				/* Length of the column name */
     SQLSMALLINT colNameAllocLen = 40;
 				/* Allocated length of the column name */
@@ -1225,7 +1225,7 @@ GetResultSetDescription(
     Tcl_DString colNameDS;	/* Name of the current column, translated */
     Tcl_Obj* colNameObj;	/* Name of the current column, packaged in
 				 * a Tcl_Obj */
-    Tcl_HashTable nameHash;	/* Hash table to manage column name 
+    Tcl_HashTable nameHash;	/* Hash table to manage column name
 				 * uniqueness. */
     Tcl_HashEntry* nameEntry;	/* Hash table entry for the current name */
     int new;			/* Flag that column name is unique */
@@ -1240,12 +1240,12 @@ GetResultSetDescription(
     Tcl_InitHashTable(&nameHash, TCL_STRING_KEYS);
     nameEntry = Tcl_CreateHashEntry(&nameHash, "", &new);
     Tcl_SetHashValue(nameEntry, (ClientData) 0);
-    
+
     /* Count the columns of the result set */
 
     rc = SQLNumResultCols(hStmt, &nColumns);
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_STMT, hStmt, 
+	TransferSQLError(interp, SQL_HANDLE_STMT, hStmt,
 			 "(getting number of result columns)");
 	return TCL_ERROR;
     }
@@ -1253,7 +1253,7 @@ GetResultSetDescription(
     Tcl_IncrRefCount(colNames);
     if (nColumns != 0) {
 
-	/* 
+	/*
 	 * If there are columns in the result set, find their names and
 	 * data types.
 	 */
@@ -1265,17 +1265,17 @@ GetResultSetDescription(
 
 		/* Describe one column of the result set */
 
-		rc = SQLDescribeColW(hStmt, i + 1, colNameW, 
+		rc = SQLDescribeColW(hStmt, i + 1, colNameW,
 				     colNameAllocLen, &colNameLen,
 				     &(rdata->results[i].dataType),
 				     &(rdata->results[i].precision),
 				     &(rdata->results[i].scale),
 				     &(rdata->results[i].nullable));
 
-		/* 
+		/*
 		 * Reallocate the name buffer and retry if the buffer was
 		 * too small.
-		 */		 
+		 */
 
 		if (colNameLen < colNameAllocLen) {
 		    retry = 0;
@@ -1300,7 +1300,7 @@ GetResultSetDescription(
 		ckfree((char*)rdata->results);
 		goto cleanup;
 	    }
-	    
+
 	    /* Make a Tcl_Obj for the column name */
 
 	    Tcl_DStringInit(&colNameDS);
@@ -1319,7 +1319,7 @@ GetResultSetDescription(
 		    break;
 		}
 
-		/* 
+		/*
 		 * Non-unique name - append a # and the number of times
 		 * we've seen it before.
 		 */
@@ -1330,7 +1330,7 @@ GetResultSetDescription(
 		sprintf(numbuf, "#%d", count);
 		Tcl_AppendToObj(colNameObj, numbuf, -1);
 	    }
-	    
+
 	    /* Add column name to the list of column names */
 
 	    Tcl_ListObjAppendElement(NULL, colNames, colNameObj);
@@ -1354,7 +1354,7 @@ GetResultSetDescription(
 	ckfree((char*) colNameW);
     }
     return status;
-    
+
 }
 
 /*
@@ -1395,7 +1395,7 @@ ConfigureConnection(
     Tcl_Obj *CONST objv[],	/* Option vector */
     SQLUSMALLINT* connectFlagsPtr,
 				/* Pointer to the driver connection options */
-    HWND* hParentWindowPtr	/* Handle to the parent window for a 
+    HWND* hParentWindowPtr	/* Handle to the parent window for a
 				 * connection dialog */
 ) {
 
@@ -1466,7 +1466,7 @@ ConfigureConnection(
 	rc = SQLGetConnectAttr(hDBC, SQL_ATTR_TXN_ISOLATION,
 			       (SQLPOINTER) &mode, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	    TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+	    TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 			     "(getting isolation level of connection)");
 	    return TCL_ERROR;
 	}
@@ -1479,12 +1479,12 @@ ConfigureConnection(
 	rc = SQLGetConnectAttr(hDBC, SQL_ATTR_ACCESS_MODE,
 			       (SQLPOINTER) &mode, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	    TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+	    TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 			     "(getting access mode of connection)");
 	    return TCL_ERROR;
 	}
 	Tcl_ListObjAppendElement(NULL, retval, literals[LIT_READONLY]);
-	Tcl_ListObjAppendElement(NULL, retval, 
+	Tcl_ListObjAppendElement(NULL, retval,
 				 Tcl_NewIntObj(mode == SQL_MODE_READ_ONLY));
 
 	/* -timeout */
@@ -1495,7 +1495,7 @@ ConfigureConnection(
 	    if (SQLStateIs(SQL_HANDLE_DBC, hDBC, "HYC00")) {
 		seconds = 0;
 	    } else {
-		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 				 "(getting connection timeout value)");
 		return TCL_ERROR;
 	    }
@@ -1537,7 +1537,7 @@ ConfigureConnection(
 	    rc = SQLGetConnectAttr(hDBC, SQL_ATTR_TXN_ISOLATION,
 				   (SQLPOINTER) &mode, 0, NULL);
 	    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 				 "(getting isolation level of connection)");
 		return TCL_ERROR;
 	    }
@@ -1558,7 +1558,7 @@ ConfigureConnection(
 	    rc = SQLGetConnectAttr(hDBC, SQL_ATTR_ACCESS_MODE,
 				   (SQLPOINTER) &mode, 0, NULL);
 	    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 				 "(getting access mode of connection)");
 		return TCL_ERROR;
 	    }
@@ -1573,7 +1573,7 @@ ConfigureConnection(
 		seconds = 0;
 	    } else {
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-		    TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+		    TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 				     "(getting connection timeout value)");
 		    return TCL_ERROR;
 		}
@@ -1598,7 +1598,7 @@ ConfigureConnection(
 	switch (indx) {
 
 	case COPTION_ENCODING:
-	    /* 
+	    /*
 	     * Encoding - report "not implemented" unless the encoding
 	     * would not be changed.
 	     */
@@ -1634,7 +1634,7 @@ ConfigureConnection(
 	    rc = SQLSetConnectAttr(hDBC, SQL_ATTR_TXN_ISOLATION,
 				   (SQLPOINTER)mode, 0);
 	    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 				 "(setting isolation level of connection)");
 		return TCL_ERROR;
 	    }
@@ -1693,7 +1693,7 @@ ConfigureConnection(
 
 	case COPTION_READONLY:
 	    /* read-only indicator */
-	    
+
 	    if (Tcl_GetBooleanFromObj(interp, objv[i+1], &j) != TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -1705,7 +1705,7 @@ ConfigureConnection(
 	    rc = SQLSetConnectAttr(hDBC, SQL_ATTR_ACCESS_MODE,
 				   (SQLPOINTER)mode, 0);
 	    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+		TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 				 "(setting access mode of connection)");
 		return TCL_ERROR;
 	    }
@@ -1721,14 +1721,14 @@ ConfigureConnection(
 	    rc = SQLSetConnectAttr(hDBC, SQL_ATTR_CONNECTION_TIMEOUT,
 				   (SQLPOINTER)seconds, 0);
 	    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-		/* 
+		/*
 		 * A failure is OK if the SQL state is "Optional
 		 * Function Not Implemented" and we were trying to set
 		 * a zero timeout.
 		 */
 		if (!SQLStateIs(SQL_HANDLE_DBC, hDBC, "HYC00")
 		    || seconds != 0) {
-		    TransferSQLError(interp, SQL_HANDLE_DBC, hDBC, 
+		    TransferSQLError(interp, SQL_HANDLE_DBC, hDBC,
 				     "(setting access mode of connection)");
 		    return TCL_ERROR;
 		}
@@ -1805,7 +1805,7 @@ ConnectionConstructor(
 
     rc = SQLAllocHandle(SQL_HANDLE_DBC, pidata->hEnv, (SQLHANDLE*) &hDBC);
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_ENV, pidata->hEnv, 
+	TransferSQLError(interp, SQL_HANDLE_ENV, pidata->hEnv,
 			 "(allocating connection handle)");
 	return TCL_ERROR;
     }
@@ -1820,7 +1820,7 @@ ConnectionConstructor(
 	SQLFreeHandle(SQL_HANDLE_DBC, hDBC);
 	return TCL_ERROR;
     }
-    
+
     /*
      * Connect to the database (SQLConnect, SQLDriverConnect, SQLBrowseConnect)
      */
@@ -1937,7 +1937,7 @@ ConnectionBeginTransactionMethod(
  *	$connection configure
  * -or- $connection configure -option
  * -or- $connection configure ?-option value?...
- * 
+ *
  * Parameters:
  *	Alternating options and values
  *
@@ -1987,7 +1987,7 @@ ConnectionConfigureMethod(
  * Usage:
  *	$connection commit
  * -or- $connection rollback
- * 
+ *
  * Parameters:
  *	None.
  *
@@ -2244,7 +2244,7 @@ CloneCmd(
  *
  * DeleteConnectionMetadata, DeleteConnection --
  *
- *	Cleans up when a database connection is deleted.  
+ *	Cleans up when a database connection is deleted.
  *
  * Results:
  *	None.
@@ -2266,7 +2266,7 @@ static void
 DeleteConnection(
     ConnectionData* cdata	/* Instance data for the connection */
 ) {
-    /* 
+    /*
      * All SQL errors are ignored here because we can't do anything
      * about them, anyway.
      */
@@ -2443,12 +2443,12 @@ StatementConstructor(
     Tcl_IncrRefCount(nativeSql);
     for (i = 0; i < tokenc; ++i) {
 	tokenStr = Tcl_GetStringFromObj(tokenv[i], &tokenLen);
-	
+
 	switch (tokenStr[0]) {
 	case '$':
 	case ':':
 	    Tcl_AppendToObj(nativeSql, "?", 1);
-	    Tcl_ListObjAppendElement(NULL, sdata->subVars, 
+	    Tcl_ListObjAppendElement(NULL, sdata->subVars,
 				     Tcl_NewStringObj(tokenStr+1, tokenLen-1));
 	    break;
 
@@ -2469,13 +2469,13 @@ StatementConstructor(
 	goto freeSData;
     }
 
-    /* Determine the number of parameters that ODBC thinks are in the 
+    /* Determine the number of parameters that ODBC thinks are in the
      * statement. */
 
     Tcl_ListObjLength(NULL, sdata->subVars, &i);
     sdata->params = (ParamData*) ckalloc(i * sizeof(ParamData));
     for (j = 0; j < i; ++j) {
-	/* 
+	/*
 	 * Supply defaults in case the driver doesn't support introspection
 	 * of parameters.  Since not all drivers do WVARCHAR, VARCHAR
 	 * appears to be the only workable option.
@@ -2504,9 +2504,9 @@ StatementConstructor(
 	    goto freeSData;
 	}
 
-	/* 
+	/*
 	 * Try to describe the parameters for the sake of consistency
-	 * in conversion and efficiency in execution. 
+	 * in conversion and efficiency in execution.
 	 */
 
 	for (i = 0; i < nParams; ++i) {
@@ -2516,7 +2516,7 @@ StatementConstructor(
 				  &(sdata->params[i].scale),
 				  &(sdata->params[i].nullable));
 	    if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
-		/* 
+		/*
 		 * FIXME: SQLDescribeParam doesn't actually describe
 		 *        the direction of parameter transmission for
 		 *	  stored procedure calls.  It appears simply
@@ -2528,8 +2528,8 @@ StatementConstructor(
 		 */
 		sdata->params[i].flags = PARAM_IN | PARAM_KNOWN;
 	    } else {
-		/* 
-		 * Supply defaults in case the driver doesn't support 
+		/*
+		 * Supply defaults in case the driver doesn't support
 		 * introspection of parameters. Again, not all drivers can
 		 * handle WVARCHAR, so VARCHAR seems to be the only
 		 * workable option.
@@ -2851,12 +2851,12 @@ TablesStatementConstructor(
 
     rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &(sdata->hStmt));
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC, 
+	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
 			 "(allocating statement handle)");
 	goto freeSData;
     }
 
-    /* 
+    /*
      * Stash the table pattern in the statement data, and set a flag that
      * that's what we have there.
      */
@@ -2887,7 +2887,7 @@ TablesStatementConstructor(
  *	for column metadata
  *
  * Parameters:
- *	Accepts a 5-element 'objv': 
+ *	Accepts a 5-element 'objv':
  *		columnsStatement new $connection $table $pattern,
  *	where $connection is the ODBC connection object, $table is the
  *	name of the table being queried, and $pattern is the pattern to
@@ -2954,12 +2954,12 @@ ColumnsStatementConstructor(
 
     rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &(sdata->hStmt));
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC, 
+	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
 			 "(allocating statement handle)");
 	goto freeSData;
     }
 
-    /* 
+    /*
      * Stash the table name and match pattern in the statement data,
      * and set a flag that that's what we have there.
      */
@@ -2991,7 +2991,7 @@ ColumnsStatementConstructor(
  *	for primary key metadata
  *
  * Parameters:
- *	Accepts a 4-element 'objv': 
+ *	Accepts a 4-element 'objv':
  *		columnsStatement new $connection $table,
  *	where $connection is the ODBC connection object and $table is the
  *	name of the table being queried.
@@ -3057,12 +3057,12 @@ PrimarykeysStatementConstructor(
 
     rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &(sdata->hStmt));
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC, 
+	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
 			 "(allocating statement handle)");
 	goto freeSData;
     }
 
-    /* 
+    /*
      * Stash the table name in the statement data,
      * and set a flag that that's what we have there.
      */
@@ -3092,7 +3092,7 @@ PrimarykeysStatementConstructor(
  *	for foreign key metadata
  *
  * Parameters:
- *	Accepts a variadic 'objv': 
+ *	Accepts a variadic 'objv':
  *		columnsStatement new $connection ?-keyword value?...
  *	where $connection is the ODBC connection object. The keyword options
  *	include '-primary', which gives the name of a primary table, and
@@ -3139,7 +3139,7 @@ ForeignkeysStatementConstructor(
     };
 
     int i;
-    int paramIdx;		/* Index of the current option in the option 
+    int paramIdx;		/* Index of the current option in the option
 				 * table */
     unsigned char have[OPT__END];
 				/* Flags for whether given -keywords have been
@@ -3196,7 +3196,7 @@ ForeignkeysStatementConstructor(
 		GetWCharStringFromObj(objv[i+1], &(sdata->nativeMatchPatLen));
 	    break;
 	case OPT_PRIMARY:
-	    sdata->nativeSqlW = 
+	    sdata->nativeSqlW =
 		GetWCharStringFromObj(objv[i+1], &(sdata->nativeSqlLen));
 	    break;
 	}
@@ -3207,7 +3207,7 @@ ForeignkeysStatementConstructor(
 
     rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &(sdata->hStmt));
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC, 
+	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
 			 "(allocating statement handle)");
 	goto freeSData;
     }
@@ -3235,7 +3235,7 @@ ForeignkeysStatementConstructor(
  *	for data type metadata
  *
  * Parameters:
- *	Accepts a 3- or 4-element 'objv': 
+ *	Accepts a 3- or 4-element 'objv':
  *		typesStatement new $connection ?$typeNum?
  *	where $connection is the ODBC connection object, and $typeNum,
  *	if present, makes the query match only the given type.
@@ -3277,7 +3277,7 @@ TypesStatementConstructor(
     } else if (objc == skip+2) {
 	if (Tcl_GetIntFromObj(interp, objv[skip+1], &typeNum) != TCL_OK) {
 	    return TCL_ERROR;
-	} 
+	}
     } else {
 	Tcl_WrongNumArgs(interp, skip, objv, "connection ?typeNum?");
 	return TCL_ERROR;
@@ -3307,7 +3307,7 @@ TypesStatementConstructor(
 
     rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &(sdata->hStmt));
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC, 
+	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
 			 "(allocating statement handle)");
 	goto freeSData;
     }
@@ -3488,7 +3488,7 @@ ResultSetConstructor(
 	return TCL_ERROR;
     }
 
-    /* 
+    /*
      * If there is no transaction in progress, turn on auto-commit so that
      * this statement will execute directly.
      */
@@ -3513,7 +3513,7 @@ ResultSetConstructor(
     IncrStatementRefCount(sdata);
     Tcl_ObjectSetMetadata(thisObject, &resultSetDataType, (ClientData) rdata);
 
-    /* 
+    /*
      * Find a statement handle that we can use to execute the SQL code.
      * If the main statement handle associated with the statement
      * is idle, we can use it.  Otherwise, we have to allocate and
@@ -3562,7 +3562,7 @@ ResultSetConstructor(
 
 	}
 
-	/* 
+	/*
 	 * Choose the C->SQL data conversion based on the parameter type
 	 */
 
@@ -3572,12 +3572,12 @@ ResultSetConstructor(
 
 	    case SQL_NUMERIC:
 	    case SQL_DECIMAL:
-	
-		/* 
+
+		/*
 		 * A generic 'numeric' type may fit in an int, wide,
 		 * or double, and gets converted specially if it does.
 		 */
-	
+
 		if (sdata->params[nBound].scale == 0) {
 		    if (sdata->params[nBound].precision < 10) {
 			goto is_integer;
@@ -3601,13 +3601,13 @@ ResultSetConstructor(
 	    case SQL_REAL:
 	    case SQL_DOUBLE:
 	    is_float:
-		
+
 		/* Pass floating point numbers through to SQL without
 		 * conversion */
 
 		rdata->bindStrings[nBound] =
 		    (SQLCHAR*) ckalloc(sizeof(double));
-		if (Tcl_GetDoubleFromObj(interp, paramValObj, 
+		if (Tcl_GetDoubleFromObj(interp, paramValObj,
 					 (double*)(rdata->bindStrings[nBound]))
 		    != TCL_OK) {
 		    ckfree((char*)(rdata->bindStrings[nBound]));
@@ -3625,7 +3625,7 @@ ResultSetConstructor(
 
 		rdata->bindStrings[nBound] =
 		    (SQLCHAR*) ckalloc(sizeof(SQLBIGINT));
-		if (Tcl_GetWideIntFromObj(interp, paramValObj, 
+		if (Tcl_GetWideIntFromObj(interp, paramValObj,
 					  (SQLBIGINT*)
 					  (rdata->bindStrings[nBound]))
 		    != TCL_OK) {
@@ -3647,7 +3647,7 @@ ResultSetConstructor(
 
 		rdata->bindStrings[nBound] =
 		    (SQLCHAR*) ckalloc(sizeof(long));
-		if (Tcl_GetLongFromObj(interp, paramValObj, 
+		if (Tcl_GetLongFromObj(interp, paramValObj,
 				       (long*)(rdata->bindStrings[nBound]))
 		    != TCL_OK) {
 		    ckfree((char*)(rdata->bindStrings[nBound]));
@@ -3662,7 +3662,7 @@ ResultSetConstructor(
 	    case SQL_VARBINARY:
 	    case SQL_LONGVARBINARY:
 
-		/* 
+		/*
 		 * Binary strings are shipped as byte arrays. It would
 		 * be nice to avoid an extra copy, but it's possible
 		 * for the byte array to shimmer away before ODBC has
@@ -3684,19 +3684,19 @@ ResultSetConstructor(
 		/* Everything else is converted as a string */
 
 		if (cdata->flags & CONNECTION_FLAG_HAS_WVARCHAR) {
-		    
+
 		    /* We prefer to transfer strings in Unicode if possible */
-		    
+
 		    dataType = SQL_C_WCHAR;
 		    rdata->bindStrings[nBound] = (SQLCHAR*)
 			GetWCharStringFromObj(paramValObj, &paramLen);
-		    rdata->bindStringLengths[nBound] = paramExternalLen = 
+		    rdata->bindStringLengths[nBound] = paramExternalLen =
 			paramLen * sizeof(SQLWCHAR);
-		    
+
 		} else {
-		    
-		    /* 
-		     * We need to convert the character string to system 
+
+		    /*
+		     * We need to convert the character string to system
 		     * encoding and store in rdata->bindStrings[nBound].
 		     */
 		    dataType = SQL_C_CHAR;
@@ -3715,7 +3715,7 @@ ResultSetConstructor(
 		}
 
 	    }
-		
+
 	} else {
 
 	    /* Parameter is NULL */
@@ -3756,13 +3756,13 @@ ResultSetConstructor(
     } else if (sdata->flags & STATEMENT_FLAG_TYPES) {
 	rc = SQLGetTypeInfo(rdata->hStmt, sdata->typeNum);
     } else if (sdata->flags & STATEMENT_FLAG_PRIMARYKEYS) {
-	rc = SQLPrimaryKeysW(rdata->hStmt, NULL, 0, NULL, 0, 
+	rc = SQLPrimaryKeysW(rdata->hStmt, NULL, 0, NULL, 0,
 			    sdata->nativeSqlW, sdata->nativeSqlLen);
     } else if (sdata->flags & STATEMENT_FLAG_FOREIGNKEYS) {
-	rc = SQLForeignKeysW(rdata->hStmt, NULL, 0, NULL, 0, 
+	rc = SQLForeignKeysW(rdata->hStmt, NULL, 0, NULL, 0,
 			     sdata->nativeSqlW, sdata->nativeSqlLen,
 			     NULL, 0, NULL, 0,
-			     sdata->nativeMatchPatternW, 
+			     sdata->nativeMatchPatternW,
 			     sdata->nativeMatchPatLen);
     } else {
 	rc = SQLExecute(rdata->hStmt);
@@ -3788,7 +3788,7 @@ ResultSetConstructor(
 			 "(counting rows in the result)");
 	return TCL_ERROR;
     }
-    
+
     return TCL_OK;
 }
 
@@ -3885,7 +3885,7 @@ ResultSetNextresultsMethod(
 				/* Literal pool */
     SQLRETURN rc;		/* Return code from ODBC operations */
 
-    /* 
+    /*
      * Once we are advancing the results, any data that we think we know
      * about the columns in the result set are incorrect. Discard them.
      */
@@ -3909,7 +3909,7 @@ ResultSetNextresultsMethod(
     }
 
     /* Determine and store the row count */
-    
+
     rc = SQLRowCount(rdata->hStmt, &(rdata->rowCount));
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
 	TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt,
@@ -3980,7 +3980,7 @@ ResultSetNextrowMethod(
     int nColumns;		/* Number of columns in the result set */
     Tcl_Obj* colName;		/* Name of the current column */
     Tcl_Obj* resultRow;		/* Row of the result set under construction */
-    
+
     Tcl_Obj* colObj;		/* Column obtained from the row */
     SQLRETURN rc;		/* Return code from ODBC operations */
     int status = TCL_ERROR;	/* Status return from this command */
@@ -4079,7 +4079,7 @@ GetCell(
     ResultSetData* rdata,	/* Instance data for the result set */
     Tcl_Interp* interp,		/* Tcl interpreter */
     int i,			/* Column position */
-    Tcl_Obj** colObjPtr		/* Returned: Tcl_Obj containing the content 
+    Tcl_Obj** colObjPtr		/* Returned: Tcl_Obj containing the content
 				 * or NULL */
 ) {
 
@@ -4087,7 +4087,7 @@ GetCell(
     StatementData* sdata = rdata->sdata;
     ConnectionData* cdata = sdata->cdata;
     SQLSMALLINT dataType;	/* Type of character data to retrieve */
-    SQLWCHAR colWBuf[BUFSIZE+1];/* Buffer to hold the string value of a 
+    SQLWCHAR colWBuf[BUFSIZE+1];/* Buffer to hold the string value of a
 				 * column */
     SQLCHAR* colBuf = (SQLCHAR*) colWBuf;
     SQLCHAR* colPtr = colBuf;	/* Pointer to the current allocated buffer
@@ -4111,15 +4111,15 @@ GetCell(
     *colObjPtr = NULL;
     switch(rdata->results[i].dataType) {
 	/* TODO: Need to return binary data as byte arrays. */
-	
+
     case SQL_NUMERIC:
     case SQL_DECIMAL:
-	
-	/* 
+
+	/*
 	 * A generic 'numeric' type may fit in an int, wide,
 	 * or double, and gets converted specially if it does.
 	 */
-	
+
 	if (rdata->results[i].scale == 0) {
 	    if (rdata->results[i].precision < 10) {
 		goto convertLong;
@@ -4139,7 +4139,7 @@ GetCell(
 	} else {
 	    goto convertUnknown;
 	}
-	
+
     case SQL_BIGINT:
     convertWide:
 	/* A wide integer */
@@ -4156,7 +4156,7 @@ GetCell(
 	    colObj = Tcl_NewWideIntObj((Tcl_WideInt)colWide);
 	}
 	break;
-	
+
     case SQL_BIT:
     case SQL_INTEGER:
     case SQL_SMALLINT:
@@ -4177,7 +4177,7 @@ GetCell(
 	    colObj = Tcl_NewLongObj(colLong);
 	}
 	break;
-	
+
     case SQL_FLOAT:
 	/*
 	 * A 'float' is converted to a 'double' if it fits;
@@ -4188,7 +4188,7 @@ GetCell(
 	} else {
 	    goto convertUnknown;
 	}
-	
+
     case SQL_REAL:
     case SQL_DOUBLE:
     convertDouble:
@@ -4211,7 +4211,7 @@ GetCell(
 	    colObj = Tcl_NewDoubleObj(colDouble);
 	}
 	break;
-	
+
     case SQL_CHAR:
     case SQL_VARCHAR:
     case SQL_LONGVARCHAR:
@@ -4245,7 +4245,7 @@ GetCell(
 	retry = 0;
 	do {
 	    retry = 0;
-	    /* 
+	    /*
 	     * It's possible that SQLGetData won't update colLen if
 	     * SQL_ERROR is returned. Store a background of zero so
 	     * that it's always initialized.
@@ -4262,7 +4262,7 @@ GetCell(
 		&& SQLStateIs(SQL_HANDLE_STMT, rdata->hStmt, "01004")) {
 		/*
 		 * The requested buffer was too small to hold the
-		 * data. 
+		 * data.
 		 */
 		offset = colAllocLen;
 		if (dataType == SQL_C_BINARY) {
@@ -4293,7 +4293,7 @@ GetCell(
 	    }
 	} while (retry);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	    char info[80];		
+	    char info[80];
 	    sprintf(info, "(retrieving result set column #%d)\n", i+1);
 	    TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt, info);
 	    if (colPtr != colBuf) {
@@ -4323,9 +4323,9 @@ GetCell(
 	}
 	if (colPtr != colBuf) {
 	    ckfree((char*) colPtr);
-	}	    
+	}
 	break;
-	
+
     } /* end of switch */
 
     *colObjPtr = colObj;
@@ -4496,7 +4496,7 @@ FreeBoundParameters(
  *	Returns a dictionary whose keys are the names of data sources and
  *	whose values are data source descriptions.
  *
- * The -system flag restricts the data sources to system data sources; 
+ * The -system flag restricts the data sources to system data sources;
  * the -user flag to user data sources. If no flag is specified, both types
  * are returned.
  *
@@ -4575,48 +4575,48 @@ DatasourcesObjCmd(
 				 SQL_MAX_DSN_LENGTH + 1, &serverNameLen,
 				 description, descAllocLen, &descLen);
 	    direction = SQL_FETCH_NEXT;
-	    
+
 	    if (rc == SQL_SUCCESS_WITH_INFO && descLen > descLenNeeded) {
-		    
+
 		/* The description buffer wasn't big enough. */
-		
+
 		descLenNeeded = 2 * descLen;
 		finished = 0;
 		break;
-		    
+
 	    } else if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
-		
+
 		/* Got a data source; add key and value to the dictionary */
-		
+
 		Tcl_DStringInit(&nameDS);
 		DStringAppendWChars(&nameDS, serverName, serverNameLen);
 		nameObj = Tcl_NewStringObj(Tcl_DStringValue(&nameDS),
 					   Tcl_DStringLength(&nameDS));
 		Tcl_ListObjAppendElement(NULL, retval, nameObj);
 		Tcl_DStringFree(&nameDS);
-		
+
 		Tcl_DStringInit(&nameDS);
 		DStringAppendWChars(&nameDS, description, descLen);
 		nameObj = Tcl_NewStringObj(Tcl_DStringValue(&nameDS),
 					   Tcl_DStringLength(&nameDS));
 		Tcl_ListObjAppendElement(NULL, retval, nameObj);
 		Tcl_DStringFree(&nameDS);
-		
+
 	    } else if (rc == SQL_NO_DATA) {
 
 		/* End of data sources */
-		
+
 		if (finished) {
 		    Tcl_SetObjResult(interp, retval);
 		    status = TCL_OK;
 		}
 		break;
-		
+
 	    } else {
-		
+
 		/* Anything else is an error */
-		
-		TransferSQLError(interp, SQL_HANDLE_ENV, pidata->hEnv, 
+
+		TransferSQLError(interp, SQL_HANDLE_ENV, pidata->hEnv,
 				 "(retrieving data source names)");
 		status = TCL_ERROR;
 		finished = 1;
@@ -4712,11 +4712,11 @@ DriversObjCmd(
 			     driverAllocLen, &driverLen,
 			     attributes, attrAllocLen, &attrLen);
 	    direction = SQL_FETCH_NEXT;
-	    
+
 	    if (rc == SQL_SUCCESS_WITH_INFO && driverLen > driverLenNeeded) {
 
 		/* The description buffer wasn't big enough. */
-		
+
 		driverLenNeeded = 2 * driverLen;
 		finished = 0;
 		break;
@@ -4732,17 +4732,17 @@ DriversObjCmd(
 
 	    if (finished) {
 		if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
-		    
+
 		    /* Got a data source; add key and value to the dictionary */
-		    
+
 		    Tcl_DStringInit(&nameDS);
 		    DStringAppendWChars(&nameDS, driver, driverLen);
 		    nameObj = Tcl_NewStringObj(Tcl_DStringValue(&nameDS),
 					       Tcl_DStringLength(&nameDS));
 		    Tcl_ListObjAppendElement(NULL, retval, nameObj);
 		    Tcl_DStringFree(&nameDS);
-		    
-		    /* 
+
+		    /*
 		     * Attributes are a set of U+0000-terminated
 		     * strings, ending with an extra U+0000
 		     */
@@ -4760,22 +4760,22 @@ DriversObjCmd(
 			i = j + 1;
 		    }
 		    Tcl_ListObjAppendElement(NULL, retval, attrObj);
-		    
+
 		} else if (rc == SQL_NO_DATA) {
-		    
+
 		    /* End of data sources */
-		    
+
 		    if (finished) {
 			Tcl_SetObjResult(interp, retval);
 			status = TCL_OK;
 		    }
 		    break;
-		    
+
 		} else {
-		    
+
 		    /* Anything else is an error */
-		    
-		    TransferSQLError(interp, SQL_HANDLE_ENV, pidata->hEnv, 
+
+		    TransferSQLError(interp, SQL_HANDLE_ENV, pidata->hEnv,
 				     "(retrieving data source names)");
 		    status = TCL_ERROR;
 		    finished = 1;
@@ -4802,7 +4802,7 @@ DriversObjCmd(
  * Usage:
  *	::tdbc::odbc::datasource subcommand driver ?keyword=value?...
  *
- * Parameters: 
+ * Parameters:
  *	subcommand - One of 'add', 'add_system', 'configure',
  *		'configure_system', 'remove', or 'remove_system'
  *	driver - Name of the ODBC driver to use in configuring the data source.
@@ -4855,7 +4855,7 @@ DatasourceObjCmdW(
     BOOL ok;
     int status = TCL_OK;
     int finished = 0;
-   
+
     /* Check args */
 
     if (objc < 4) {
@@ -4872,7 +4872,7 @@ DatasourceObjCmdW(
 
     driverName = GetWCharStringFromObj(objv[2], &driverNameLen);
 
-    /* 
+    /*
      * Convert driver attributes to the appropriate encoding, separated
      * by NUL bytes.
      */
@@ -4911,7 +4911,7 @@ DatasourceObjCmdW(
 	while (!finished) {
 	    errorMessageLen = SQL_MAX_MESSAGE_LENGTH;
 	    errorMessageStatus =
-		SQLInstallerError(i, &errorCode, errorMessage, 
+		SQLInstallerError(i, &errorCode, errorMessage,
 				   SQL_MAX_MESSAGE_LENGTH-1, &errorMessageLen);
 	    switch(errorMessageStatus) {
 	    case SQL_SUCCESS:
@@ -4981,7 +4981,7 @@ DatasourceObjCmdW(
  * Usage:
  *	::tdbc::odbc::datasource subcommand driver ?keyword=value?...
  *
- * Parameters: 
+ * Parameters:
  *	subcommand - One of 'add', 'add_system', 'configure',
  *		'configure_system', 'remove', or 'remove_system'
  *	driver - Name of the ODBC driver to use in configuring the data source.
@@ -5037,7 +5037,7 @@ DatasourceObjCmdA(
     BOOL ok;
     int status = TCL_OK;
     int finished = 0;
-   
+
     /* Check args */
 
     if (objc < 4) {
@@ -5058,7 +5058,7 @@ DatasourceObjCmdA(
     driverName = Tcl_DStringValue(&driverNameDS);
     driverNameLen = Tcl_DStringLength(&driverNameDS);
 
-    /* 
+    /*
      * Convert driver attributes to the appropriate encoding, separated
      * by NUL bytes.
      */
@@ -5210,7 +5210,7 @@ Tdbcodbc_Init(
 	return TCL_ERROR;
     }
 
-    /* 
+    /*
      * Create per-interpreter data for the package
      */
 
@@ -5222,7 +5222,7 @@ Tdbcodbc_Init(
 	Tcl_IncrRefCount(pidata->literals[i]);
     }
 
-    /* 
+    /*
      * Find the connection class, and attach the constructor to
      * it. Hold the SQLENV in the method's client data.
      */

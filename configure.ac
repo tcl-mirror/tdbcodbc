@@ -2,13 +2,6 @@
 dnl	This file is an input file used by the GNU "autoconf" program to
 dnl	generate the file "configure", which is run during Tcl installation
 dnl	to configure the system for the local environment.
-#
-# RCS: @(#) $Id: configure.in,v 1.47 2007/02/09 19:06:47 hobbs Exp $
-
-#-----------------------------------------------------------------------
-# Sample configure.in for Tcl Extensions.  The only places you should
-# need to modify this file are marked by the string __CHANGE__
-#-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
 # Set your package name and version numbers here.
@@ -26,8 +19,9 @@ AC_INIT([tdbcodbc], [1.0.3])
 # as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
 #--------------------------------------------------------------------
 
-AC_CONFIG_AUX_DIR(tclconfig)
 TEA_INIT([3.9])
+
+AC_CONFIG_AUX_DIR(tclconfig)
 
 #--------------------------------------------------------------------
 # Load the tclConfig.sh file
@@ -35,6 +29,13 @@ TEA_INIT([3.9])
 
 TEA_PATH_TCLCONFIG
 TEA_LOAD_TCLCONFIG
+
+#--------------------------------------------------------------------
+# Load the tkConfig.sh file if necessary (Tk extension)
+#--------------------------------------------------------------------
+
+#TEA_PATH_TKCONFIG
+#TEA_LOAD_TKCONFIG
 
 #--------------------------------------------------------------------
 # Load the tclooConfig.sh file on Tcl versions where oo is an
@@ -46,24 +47,16 @@ if test "${TCL_MAJOR_VERSION}" -lt 8 ; then
 Found configuration for Tcl ${TCL_VERSION}.])
 fi
 if test "${TCL_MAJOR_VERSION}" -eq 8 ; then
-  if test "${TCL_MINOR_VERSION}" -lt 6 ; then
-    AC_MSG_ERROR([${PACKAGE_NAME} ${PACKAGE_VERSION} requires Tcl 8.6 or newer.
+   if test "${TCL_MINOR_VERSION}" -lt 6 ; then
+      AC_MSG_ERROR([${PACKAGE_NAME} ${PACKAGE_VERSION} requires Tcl 8.6 or newer.
 Found configuration for Tcl ${TCL_VERSION}.])
-  fi
-  TCLOO_CFLAGS=''
+   fi
+   TCLOO_CFLAGS=''
 fi
 TCL_VERSION_REQ=8.6; AC_SUBST(TCL_VERSION_REQ)
 
-#--------------------------------------------------------------------
-# Load the tdbcConfig.sh and prepare to put its paths in the Makefile
-#--------------------------------------------------------------------
-
 TEA_PATH_CONFIG(tdbc)
 TEA_LOAD_CONFIG(tdbc)
-AC_SUBST(TDBC_VERSION)
-AC_SUBST(tdbc_BIN_DIR)
-AC_SUBST(TDBC_LIB_FILE)
-
 # The next bit probably ought to be in TEA_LOAD_CONFIG
 AC_MSG_WARN([Looking for "${tdbc_BIN_DIR}/Makefile"])
 if test -f "${tdbc_BIN_DIR}/Makefile" ; then
@@ -72,6 +65,9 @@ if test -f "${tdbc_BIN_DIR}/Makefile" ; then
     tdbc_LIBRARY_PATH=${tdbc_BUILD_LIBRARY_PATH}
 fi
 AC_SUBST(tdbc_LIBRARY_PATH)
+AC_SUBST(TDBC_VERSION)
+AC_SUBST(tdbc_BIN_DIR)
+AC_SUBST(TDBC_LIB_FILE)
 
 #-----------------------------------------------------------------------
 # Handle the --prefix=... option by defaulting to what Tcl gave.
@@ -125,20 +121,16 @@ TEA_ADD_STUB_SOURCES()
 TEA_ADD_TCL_SOURCES([library/tdbcodbc.tcl])
 
 #--------------------------------------------------------------------
-# A few miscellaneous platform-specific items:
 #
-# Define a special symbol for Windows (BUILD_sample in this case) so
-# that we create the export library with the dll.
-#
-# Windows creates a few extra files that need to be cleaned up.
 # You can add more files to clean if your extension creates any extra
-# files.
+# files by extending CLEANFILES.
+# Add pkgIndex.tcl if it is generated in the Makefile instead of ./configure
+# and change Makefile.in to move it from CONFIG_CLEAN_FILES to BINARIES var.
 #
+# A few miscellaneous platform-specific items:
 # TEA_ADD_* any platform specific compiler/build info here.
 #--------------------------------------------------------------------
 
-# Add pkgIndex.tcl if it is generated in the Makefile instead of ./configure
-# and change Makefile.in to move it from CONFIG_CLEAN_FILES to BINARIES var.
 #CLEANFILES="$CLEANFILES pkgIndex.tcl"
 
 #--------------------------------------------------------------------
@@ -187,7 +179,52 @@ TEA_ENABLE_SYMBOLS
 #--------------------------------------------------------------------
 
 AC_DEFINE(USE_TCL_STUBS, 1, [Use Tcl stubs])
-#AC_DEFINE(USE_TK_STUBS, 1, [Use Tk stubs])
+
+#--------------------------------------------------------------------
+# We need the INT2PTR and PTR2INT macros, so make sure that intptr_t
+# is defined.
+#--------------------------------------------------------------------
+
+AC_CHECK_HEADERS(stdint.h sys/types.h)
+AC_CHECK_TYPE([intptr_t], [
+    AC_DEFINE([HAVE_INTPTR_T], 1, [Do we have the intptr_t type?])], [
+    AC_CACHE_CHECK([for pointer-size signed integer type], tcl_cv_intptr_t, [
+    for tcl_cv_intptr_t in "int" "long" "long long" none; do
+	if test "$tcl_cv_intptr_t" != none; then
+	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_intptr_t)]])],
+		[tcl_ok=yes], [tcl_ok=no])
+	    test "$tcl_ok" = yes && break; fi
+    done])
+    if test "$tcl_cv_intptr_t" != none; then
+	AC_DEFINE_UNQUOTED([intptr_t], [$tcl_cv_intptr_t], [Signed integer
+	   type wide enough to hold a pointer.])
+    fi
+])
+AC_CHECK_TYPE([uintptr_t], [
+    AC_DEFINE([HAVE_UINTPTR_T], 1, [Do we have the uintptr_t type?])], [
+    AC_CACHE_CHECK([for pointer-size unsigned integer type], tcl_cv_uintptr_t, [
+    for tcl_cv_uintptr_t in "unsigned int" "unsigned long" "unsigned long long" \
+	    none; do
+	if test "$tcl_cv_uintptr_t" != none; then
+	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_uintptr_t)]])],
+		[tcl_ok=yes], [tcl_ok=no])
+	    test "$tcl_ok" = yes && break; fi
+    done])
+    if test "$tcl_cv_uintptr_t" != none; then
+	AC_DEFINE_UNQUOTED([uintptr_t], [$tcl_cv_uintptr_t], [Unsigned integer
+	   type wide enough to hold a pointer.])
+    fi
+])
+
+#--------------------------------------------------------------------
+# Locate the ws2_32 library; we need it for ntohs and friends
+#--------------------------------------------------------------------
+
+AC_CHECK_LIB(ws2_32,main,TEA_ADD_LIBS([-lws2_32]),[
+    AC_CHECK_LIB(winsock,main,TEA_ADD_LIBS([-lwinsock]))
+])
 
 #--------------------------------------------------------------------
 # This macro generates a line to use when building a library.  It
@@ -196,7 +233,6 @@ AC_DEFINE(USE_TCL_STUBS, 1, [Use Tcl stubs])
 #--------------------------------------------------------------------
 
 TEA_MAKE_LIB
-TEAX_VC_MANIFEST
 
 #--------------------------------------------------------------------
 # Determine the name of the tclsh and/or wish executables in the
@@ -217,8 +253,4 @@ TEA_PROG_TCLSH
 CONFIGURE_OUTPUTS="Makefile pkgIndex.tcl config.cache config.log config.status"
 AC_SUBST(CONFIGURE_OUTPUTS)
 
-AC_CONFIG_FILES([Makefile pkgIndex.tcl])
-AC_OUTPUT
-
-# This is a comment added to force the 'execute' permission to update 
-# in the Fossil repository.
+AC_OUTPUT([Makefile pkgIndex.tcl])

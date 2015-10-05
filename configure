@@ -622,8 +622,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 CONFIGURE_OUTPUTS
 TCLSH_PROG
-ADD_MANIFEST
-MT
 VC_MANIFEST_EMBED_EXE
 VC_MANIFEST_EMBED_DLL
 RANLIB_STUB
@@ -662,9 +660,9 @@ INSTALL_DATA
 INSTALL_DATA_DIR
 INSTALL
 CPP
-tdbc_LIBRARY_PATH
 TDBC_LIB_FILE
 TDBC_VERSION
+tdbc_LIBRARY_PATH
 tdbc_STUB_LIB_PATH
 tdbc_STUB_LIB_SPEC
 tdbc_STUB_LIB_FILE
@@ -2428,35 +2426,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
 #--------------------------------------------------------------------
 
-ac_aux_dir=
-for ac_dir in tclconfig "$srcdir"/tclconfig; do
-  if test -f "$ac_dir/install-sh"; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/install-sh -c"
-    break
-  elif test -f "$ac_dir/install.sh"; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/install.sh -c"
-    break
-  elif test -f "$ac_dir/shtool"; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/shtool install -c"
-    break
-  fi
-done
-if test -z "$ac_aux_dir"; then
-  as_fn_error $? "cannot find install-sh, install.sh, or shtool in tclconfig \"$srcdir\"/tclconfig" "$LINENO" 5
-fi
-
-# These three variables are undocumented and unsupported,
-# and are intended to be withdrawn in a future Autoconf release.
-# They can cause serious problems if a builder's source tree is in a directory
-# whose full name contains unusual characters.
-ac_config_guess="$SHELL $ac_aux_dir/config.guess"  # Please don't use this var.
-ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
-ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
-
-
 
     # TEA extensions pass this us the version of TEA they think they
     # are compatible with.
@@ -2504,7 +2473,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_CYGPATH="cygpath -w"
+    ac_cv_prog_CYGPATH="cygpath -m"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -2529,9 +2498,8 @@ fi
 	    TEA_PLATFORM="windows"
 	    ;;
 	*CYGWIN_*)
-	    CYGPATH=echo
 	    EXEEXT=".exe"
-	    # TEA_PLATFORM is determined later in LOAD_TCLCONFIG
+	    # CYGPATH and TEA_PLATFORM are determined later in LOAD_TCLCONFIG
 	    ;;
 	*)
 	    CYGPATH=echo
@@ -2577,6 +2545,36 @@ $as_echo "$as_me: configuring ${PACKAGE_NAME} ${PACKAGE_VERSION}" >&6;}
 
 
 
+
+
+
+ac_aux_dir=
+for ac_dir in tclconfig "$srcdir"/tclconfig; do
+  if test -f "$ac_dir/install-sh"; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/install-sh -c"
+    break
+  elif test -f "$ac_dir/install.sh"; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/install.sh -c"
+    break
+  elif test -f "$ac_dir/shtool"; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/shtool install -c"
+    break
+  fi
+done
+if test -z "$ac_aux_dir"; then
+  as_fn_error $? "cannot find install-sh, install.sh, or shtool in tclconfig \"$srcdir\"/tclconfig" "$LINENO" 5
+fi
+
+# These three variables are undocumented and unsupported,
+# and are intended to be withdrawn in a future Autoconf release.
+# They can cause serious problems if a builder's source tree is in a directory
+# whose full name contains unusual characters.
+ac_config_guess="$SHELL $ac_aux_dir/config.guess"  # Please don't use this var.
+ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
+ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 
@@ -3609,9 +3607,51 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  TEA_PLATFORM="unix"
+
+	    TEA_PLATFORM="unix"
+	    CYGPATH=echo
+
 else
-  TEA_PLATFORM="windows"
+
+	    TEA_PLATFORM="windows"
+	    # Extract the first word of "cygpath", so it can be a program name with args.
+set dummy cygpath; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_CYGPATH+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$CYGPATH"; then
+  ac_cv_prog_CYGPATH="$CYGPATH" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CYGPATH="cygpath -m"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_CYGPATH" && ac_cv_prog_CYGPATH="echo"
+fi
+fi
+CYGPATH=$ac_cv_prog_CYGPATH
+if test -n "$CYGPATH"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CYGPATH" >&5
+$as_echo "$CYGPATH" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
@@ -3642,6 +3682,13 @@ _ACEOF
 
 
 #--------------------------------------------------------------------
+# Load the tkConfig.sh file if necessary (Tk extension)
+#--------------------------------------------------------------------
+
+#TEA_PATH_TKCONFIG
+#TEA_LOAD_TKCONFIG
+
+#--------------------------------------------------------------------
 # Load the tclooConfig.sh file on Tcl versions where oo is an
 # extension.
 #--------------------------------------------------------------------
@@ -3651,17 +3698,13 @@ if test "${TCL_MAJOR_VERSION}" -lt 8 ; then
 Found configuration for Tcl ${TCL_VERSION}." "$LINENO" 5
 fi
 if test "${TCL_MAJOR_VERSION}" -eq 8 ; then
-  if test "${TCL_MINOR_VERSION}" -lt 6 ; then
-    as_fn_error $? "${PACKAGE_NAME} ${PACKAGE_VERSION} requires Tcl 8.6 or newer.
+   if test "${TCL_MINOR_VERSION}" -lt 6 ; then
+      as_fn_error $? "${PACKAGE_NAME} ${PACKAGE_VERSION} requires Tcl 8.6 or newer.
 Found configuration for Tcl ${TCL_VERSION}." "$LINENO" 5
-  fi
-  TCLOO_CFLAGS=''
+   fi
+   TCLOO_CFLAGS=''
 fi
 TCL_VERSION_REQ=8.6;
-
-#--------------------------------------------------------------------
-# Load the tdbcConfig.sh and prepare to put its paths in the Makefile
-#--------------------------------------------------------------------
 
 
     #
@@ -3910,10 +3953,6 @@ fi
 
 fi
 
-
-
-
-
 # The next bit probably ought to be in TEA_LOAD_CONFIG
 { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Looking for \"${tdbc_BIN_DIR}/Makefile\"" >&5
 $as_echo "$as_me: WARNING: Looking for \"${tdbc_BIN_DIR}/Makefile\"" >&2;}
@@ -3923,6 +3962,9 @@ $as_echo "$as_me: WARNING: Found Makefile - using build include spec and lib spe
     tdbc_INCLUDE_SPEC=${tdbc_BUILD_INCLUDE_SPEC}
     tdbc_LIBRARY_PATH=${tdbc_BUILD_LIBRARY_PATH}
 fi
+
+
+
 
 
 #-----------------------------------------------------------------------
@@ -6078,20 +6120,16 @@ fi
 
 
 #--------------------------------------------------------------------
-# A few miscellaneous platform-specific items:
 #
-# Define a special symbol for Windows (BUILD_sample in this case) so
-# that we create the export library with the dll.
-#
-# Windows creates a few extra files that need to be cleaned up.
 # You can add more files to clean if your extension creates any extra
-# files.
+# files by extending CLEANFILES.
+# Add pkgIndex.tcl if it is generated in the Makefile instead of ./configure
+# and change Makefile.in to move it from CONFIG_CLEAN_FILES to BINARIES var.
 #
+# A few miscellaneous platform-specific items:
 # TEA_ADD_* any platform specific compiler/build info here.
 #--------------------------------------------------------------------
 
-# Add pkgIndex.tcl if it is generated in the Makefile instead of ./configure
-# and change Makefile.in to move it from CONFIG_CLEAN_FILES to BINARIES var.
 #CLEANFILES="$CLEANFILES pkgIndex.tcl"
 
 #--------------------------------------------------------------------
@@ -7087,13 +7125,31 @@ $as_echo "found $CELIB_DIR" >&6; }
 	        else
 		    runtime=-MD
 	        fi
+	        case "x`echo \${VisualStudioVersion}`" in
+	            x14-9*)
+		        lflags="${lflags} -nodefaultlib:libucrt.lib"
+
+    vars="ucrt.lib"
+    for i in $vars; do
+	if test "${TEA_PLATFORM}" = "windows" -a "$GCC" = "yes" ; then
+	    # Convert foo.lib to -lfoo for GCC.  No-op if not *.lib
+	    i=`echo "$i" | sed -e 's/^\([^-].*\)\.lib$/-l\1/i'`
+	fi
+	PKG_LIBS="$PKG_LIBS $i"
+    done
+
+
+	            ;;
+	            *)
+	            ;;
+	        esac
 
                 if test "$do64bit" != "no" ; then
 		    # All this magic is necessary for the Win64 SDK RC1 - hobbs
 		    CC="\"${PATH64}/cl.exe\""
 		    CFLAGS="${CFLAGS} -I\"${MSSDK}/Include\" -I\"${MSSDK}/Include/crt\" -I\"${MSSDK}/Include/crt/sys\""
 		    RC="\"${MSSDK}/bin/rc.exe\""
-		    lflags="-nologo -MACHINE:${MACHINE} -LIBPATH:\"${MSSDK}/Lib/${MACHINE}\""
+		    lflags="${lflags} -nologo -MACHINE:${MACHINE} -LIBPATH:\"${MSSDK}/Lib/${MACHINE}\""
 		    LINKBIN="\"${PATH64}/link.exe\""
 		    CFLAGS_DEBUG="-nologo -Zi -Od -W3 ${runtime}d"
 		    CFLAGS_OPTIMIZE="-nologo -O2 -W2 ${runtime}"
@@ -7145,12 +7201,12 @@ _ACEOF
 		    CFLAGS_DEBUG="-nologo -Zi -Od"
 		    CFLAGS_OPTIMIZE="-nologo -Ox"
 		    lversion=`echo ${CEVERSION} | sed -e 's/\(.\)\(..\)/\1\.\2/'`
-		    lflags="-MACHINE:${ARCH} -LIBPATH:\"${CELIBPATH}\" -subsystem:windowsce,${lversion} -nologo"
+		    lflags="${lflags} -MACHINE:${ARCH} -LIBPATH:\"${CELIBPATH}\" -subsystem:windowsce,${lversion} -nologo"
 		    LINKBIN="\"${CEBINROOT}/link.exe\""
 
 		else
 		    RC="rc"
-		    lflags="-nologo"
+		    lflags="${lflags} -nologo"
 		    LINKBIN="link"
 		    CFLAGS_DEBUG="-nologo -Z7 -Od -W3 -WX ${runtime}d"
 		    CFLAGS_OPTIMIZE="-nologo -O2 -W2 ${runtime}"
@@ -9112,7 +9168,224 @@ $as_echo "enabled $tcl_ok debugging" >&6; }
 
 $as_echo "#define USE_TCL_STUBS 1" >>confdefs.h
 
-#AC_DEFINE(USE_TK_STUBS, 1, [Use Tk stubs])
+
+#--------------------------------------------------------------------
+# We need the INT2PTR and PTR2INT macros, so make sure that intptr_t
+# is defined.
+#--------------------------------------------------------------------
+
+for ac_header in stdint.h sys/types.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+ac_fn_c_check_type "$LINENO" "intptr_t" "ac_cv_type_intptr_t" "$ac_includes_default"
+if test "x$ac_cv_type_intptr_t" = xyes; then :
+
+
+$as_echo "#define HAVE_INTPTR_T 1" >>confdefs.h
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pointer-size signed integer type" >&5
+$as_echo_n "checking for pointer-size signed integer type... " >&6; }
+if ${tcl_cv_intptr_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    for tcl_cv_intptr_t in "int" "long" "long long" none; do
+	if test "$tcl_cv_intptr_t" != none; then
+	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+static int test_array [1 - 2 * !(sizeof (void *) <= sizeof ($tcl_cv_intptr_t))];
+test_array [0] = 0;
+return test_array [0];
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  tcl_ok=yes
+else
+  tcl_ok=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+	    test "$tcl_ok" = yes && break; fi
+    done
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tcl_cv_intptr_t" >&5
+$as_echo "$tcl_cv_intptr_t" >&6; }
+    if test "$tcl_cv_intptr_t" != none; then
+
+cat >>confdefs.h <<_ACEOF
+#define intptr_t $tcl_cv_intptr_t
+_ACEOF
+
+    fi
+
+fi
+
+ac_fn_c_check_type "$LINENO" "uintptr_t" "ac_cv_type_uintptr_t" "$ac_includes_default"
+if test "x$ac_cv_type_uintptr_t" = xyes; then :
+
+
+$as_echo "#define HAVE_UINTPTR_T 1" >>confdefs.h
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pointer-size unsigned integer type" >&5
+$as_echo_n "checking for pointer-size unsigned integer type... " >&6; }
+if ${tcl_cv_uintptr_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    for tcl_cv_uintptr_t in "unsigned int" "unsigned long" "unsigned long long" \
+	    none; do
+	if test "$tcl_cv_uintptr_t" != none; then
+	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+static int test_array [1 - 2 * !(sizeof (void *) <= sizeof ($tcl_cv_uintptr_t))];
+test_array [0] = 0;
+return test_array [0];
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  tcl_ok=yes
+else
+  tcl_ok=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+	    test "$tcl_ok" = yes && break; fi
+    done
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tcl_cv_uintptr_t" >&5
+$as_echo "$tcl_cv_uintptr_t" >&6; }
+    if test "$tcl_cv_uintptr_t" != none; then
+
+cat >>confdefs.h <<_ACEOF
+#define uintptr_t $tcl_cv_uintptr_t
+_ACEOF
+
+    fi
+
+fi
+
+
+#--------------------------------------------------------------------
+# Locate the ws2_32 library; we need it for ntohs and friends
+#--------------------------------------------------------------------
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lws2_32" >&5
+$as_echo_n "checking for main in -lws2_32... " >&6; }
+if ${ac_cv_lib_ws2_32_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lws2_32  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ws2_32_main=yes
+else
+  ac_cv_lib_ws2_32_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ws2_32_main" >&5
+$as_echo "$ac_cv_lib_ws2_32_main" >&6; }
+if test "x$ac_cv_lib_ws2_32_main" = xyes; then :
+
+    vars="-lws2_32"
+    for i in $vars; do
+	if test "${TEA_PLATFORM}" = "windows" -a "$GCC" = "yes" ; then
+	    # Convert foo.lib to -lfoo for GCC.  No-op if not *.lib
+	    i=`echo "$i" | sed -e 's/^\(^-.*\)\.lib$/-l\1/i'`
+	fi
+	PKG_LIBS="$PKG_LIBS $i"
+    done
+
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lwinsock" >&5
+$as_echo_n "checking for main in -lwinsock... " >&6; }
+if ${ac_cv_lib_winsock_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lwinsock  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_winsock_main=yes
+else
+  ac_cv_lib_winsock_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_winsock_main" >&5
+$as_echo "$ac_cv_lib_winsock_main" >&6; }
+if test "x$ac_cv_lib_winsock_main" = xyes; then :
+
+    vars="-lwinsock"
+    for i in $vars; do
+	if test "${TEA_PLATFORM}" = "windows" -a "$GCC" = "yes" ; then
+	    # Convert foo.lib to -lfoo for GCC.  No-op if not *.lib
+	    i=`echo "$i" | sed -e 's/^\(^-.*\)\.lib$/-l\1/i'`
+	fi
+	PKG_LIBS="$PKG_LIBS $i"
+    done
+
+
+fi
+
+
+fi
+
 
 #--------------------------------------------------------------------
 # This macro generates a line to use when building a library.  It
@@ -9221,63 +9494,6 @@ rm -f conftest*
 
 
 
-
-
-    ADD_MANIFEST=":"
-    if test "$GCC" != yes \
-	    -a ${TEA_PLATFORM} == "windows" \
-	    -a "${SHARED_BUILD}" = "1"; then :
-
-	# This refers to "Manifest Tool" not "Magnetic Tape utility"
-	for ac_prog in mt
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_MT+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$MT"; then
-  ac_cv_prog_MT="$MT" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_MT="$ac_prog"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-MT=$ac_cv_prog_MT
-if test -n "$MT"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MT" >&5
-$as_echo "$MT" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$MT" && break
-done
-test -n "$MT" || MT="none"
-
-	if test "$MT" != none; then :
-
-	    ADD_MANIFEST="${MT} -nologo -manifest \$@.manifest -outputresource:\$@\;2"
-	    CLEANFILES="$CLEANFILES ${PKG_LIB_FILE}.manifest"
-fi
-fi
 
 
 #--------------------------------------------------------------------
@@ -10490,6 +10706,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-
-# This is a comment added to force the 'execute' permission to update
-# in the Fossil repository.

@@ -80,7 +80,7 @@ driver authors have a starting point for further development.
 Connection to an ODBC database is established by invoking
 \fBtdbc::odbc::connection create\fR, passing it the name to be used
 as a connection handle, followed by a standard ODBC
-connection string. As an alternative, \fBtdbc::odbc::connection new\fR 
+connection string. As an alternative, \fBtdbc::odbc::connection new\fR
 may be used to create
 a database connection with an automatically assigned name. The return value
 from \fBtdbc::odbc::connection new\fR is the name that was chosen for the
@@ -103,7 +103,7 @@ list enumerating the named data sources available to the program (for
 connection with the \fBDSN\fR keyword in the connection string).
 The result of \fBtdbc::odbc::datasources\fR may be constrained to only
 system data sources or only user data sources by including the
-\fB-system\fR or \fB-user\fR options, respectively. 
+\fB-system\fR or \fB-user\fR options, respectively.
 .PP
 The \fBtdbc::odbc::drivers\fR command returns a dictionary whose keys
 are the names of drivers available for the \fBDRIVER\fR keyword in the
@@ -148,7 +148,7 @@ specifications in the connection string.)
 In addition, if Tk is present in the requesting interpreter,
 and the local system's ODBC driver manager supports a graphical user
 interface, the \fBtdbc::odbc::connection create\fR object command
-supports a \fB-parent\fR option, whose value is the path name of 
+supports a \fB-parent\fR option, whose value is the path name of
 a Tk window. If this option is specified, and a connection string does
 not specify all the information needed to connect to an interface, the
 ODBC driver manager will display a dialog box to request whatever
@@ -168,7 +168,7 @@ tdbc::odbc::connection create db \\
 .CE
 Connects to a named data source "PAYROLL", providing "aladdin" as a
 user name and "Sesame" as a password. Uses \fBdb\fR as the name of the
-connection. 
+connection.
 .PP
 .CS
 set connString {DRIVER={Microsoft Access Driver (*.mdb)};}

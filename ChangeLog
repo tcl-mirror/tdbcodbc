@@ -259,7 +259,7 @@
 	* configure.in:
 	* README:       Advance version to 1.0b14
 	* configure:    autoconf 2-59
-	
+
 2010-04-10  Kevin B. Kenny  <kennykb@acm.org>
 
 	* configure.in:
@@ -271,24 +271,24 @@
 	                or else the TDBC library directory in the installed
 	                Tcl.
 	* configure: autoconf 2.59
-	
+
 2010-04-08  Kevin B. Kenny  <kennykb@acm.org>
 
 	* configure.in: Revised TDBC_ names to be tdbc_, because that's
 	what TEA_LOAD_CONFIG does. Added a check to find 'tdbc.h' in the
 	build directory if necessary.
-	
+
 	* configure: autoconf 2.59.
-	
+
 2010-03-17  Kevin B. Kenny  <kennykb@acm.org>
 
 	* generic/odbcStubInit.c: Revised TIP 357 API yet again, adding a
 	'flags' parameter to Tcl_LoadFile.
-	
+
 2010-03-15  Kevin B. Kenny <kennykb@acm.org>
 
 	* generic/odbcStubInit.c: Adjusted to revised TIP 357 API.
-	
+
 2010-03-14  Kevin B. Kenny  <kennykb@acm.org>
 
 	* configure.in: Removed all dependency on the native ODBC headers
@@ -310,7 +310,7 @@
 	of associating to system headers at compile time and import libraries
 	at link time. Revised handling of the '-parent' option so that the
 	dependence on Tk is only at run time.
-	
+
 2009-09-29  Kevin B. Kenny  <kennykb@acm.org>
 
 	* Makefile.in:		Changed 'test' rule to test all available
@@ -321,20 +321,20 @@
 	* generic/tdbcodbc.c:   Replaced SQLSetConnectAttr with the obsolete
 				SQLSetConnectOption, for better compatibility
 				with older ODBC drivers.
-	
+
 2009-09-20  Kevin B. Kenny  <kennykb@acm.org>
 
 	* README:
 	* configure.in:		Advance version number to 1.0b13
 	* configure:		autoconf-2.59
-	
+
 2009-07-02  Kevin B. Kenny  <kennykb@acm.org>
 
 	* Makefile.in:		Added testing on SQL Server Express so that
 	* generic/tdbcodbc.c: 	more functionality and data types can be
 	* tests/tdbcodbc.test:	exposed.  Added code to force column names
-				in result sets to be unique. 
-	
+				in result sets to be unique.
+
 	* library/tdbcodbc.tcl: Conditioned use of the IS_NULLABLE hack
 	                        on the driver's not returning the NULLABLE
 	                        flag in [$db columns]. This conditional
@@ -344,10 +344,10 @@
 	* README:
 	* configure.in:		Advanced version to 1.0b12
 	* configure:		autoconf-2.59
-	
+
 2009-05-29  Kevin B. Kenny  <kennykb@acm.org>
 
-	* README:	
+	* README:
 	* configure.in:		Advanced version to 1.0b11
 	* configure:		autoconf-2.59
 
@@ -359,11 +359,11 @@
 	* tests/tdbcodbc.test (odbc-27.[12]): Corrected a problem where
 	BLOB and MEMO tests didn't actually test anything.
 	Thanks to Alan Grunwald for reporting these bugs
-	
+
 2009-04-19  Kevin B. Kenny  <kennykb@acm.org>
 
 	* doc/tdbc_odbc.n: Added missing documentation for 'new' constructors.
-	
+
 2009-04-18  Kevin B. Kenny  <kennykb@acm.org>
 
 	* doc/tdbc_odbc.n: Made changes so that NROFF formatting matches
@@ -373,10 +373,10 @@
 			      throught the interp.
 	* tests/tdbcodbc.test: Adjusted test cases for inappropriate access
 			       to array variables.
-	
+
 2009-04-16  Kevin B. Kenny  <kennykb@acm.org>
 
-	* README:	
+	* README:
 	* configure.in:		Advanced version to 1.0b10
 	* configure:		autoconf-2.59
 
@@ -387,16 +387,16 @@
 	class level.  Replaced 'init' methods with constructors implemented
 	in C.  Replaced 'statementClass' and 'resultSetClass' variables
 	with forwarded 'statementCreate' and 'resultSetCreate' methods.
-	
+
 2009-02-16  Kevin B. Kenny  <kennykb@acm.org>
 
-	* README:	
+	* README:
 	* configure.in:		Advanced version to 1.0b9
 	* configure:		autoconf-2.59
 
 	* Makefile.in: Removed useless TCL_VERSION_REQ test in the
 	               pkgIndex.tcl.
-	* generic/tdbcodbc.c (GetCell): 
+	* generic/tdbcodbc.c (GetCell):
 		Fixed bad bug in retrieving LONGVARCHAR, LONGVARBINARY,
 		CLOB, BLOB, etc. (The SQL_NO_TOTAL return was not being
 		handled, resulting in infinite loops, memory corruption,
@@ -404,30 +404,30 @@
 	* tests/tdbcodbc.test (tdbc::odbc-27.1):
 		Added a test case for the above bug.
 		Thanks to Patrick Dunnigan for the bug report.
-	
+
 2009-02-14  Kevin B. Kenny  <kennykb@acm.org>
 
 	* configure.in:
 	* README:		Advance verwsion to 1.0b8
 	* configure:		autoconf-2.59
-	
+
 	* doc/tdbc_odbc.n:	Formatting changes so that man2html works.
 
 	* tests/tdbcodbc.test (tdbc::odbc-26.1):
 				Removed superfluous difference between
 				SQLite and non-SQLite tests - all now
 				return the same SQLSTATE.
-	
+
 2009-02-01  Kevin B. Kenny  <kennykb@acm.org>
 
 	* generic/tdbcodbc.c (StatementInitMethod): Corrected a bad check
 	that caused SQLDescribeParam to be bypassed entirely. Corrected
 	bad code that was exposed by this fix (SQLDescribeParam failure was
-	handled incorrectly). Corrected the error code for variables in	
+	handled incorrectly). Corrected the error code for variables in
 	native SQL syntax.
 	* tests/tdbcodbc.test: Corrected error codes for seven tests, to
 	match the [try]-friendly error code syntax.
-	
+
 2009-01-31  Kevin B. Kenny  <kennykb@acm.org>
 
 	* README:	Advanced version to 1.0b7
@@ -436,38 +436,38 @@
 	* generic/tdbcodbc.c: Revised error codes to be more [try]-friendly.
 	* tests/tdbcodbc.test: Added test cases for revised error codes,
 	and for an uncovered branch in ODBC statement error handling.
-	
-	
+
+
 2009-01-05  Kevin B. Kenny  <kennykb@acm.org>
 
 	* README:	Advanced version to 1.0b6
 	* configure.in:
 	* configure:	autoconf 2.59
-	
+
 2009-01-04  Kevin B. Kenny  <kennykb@acm.org>
 
 	* README:	Advanced version to 1.0b5
 	* configure.in:
 	* configure:	autoconf 2.59
-	
+
 2008-12-30  Kevin B. Kenny  <kennykb@acm.org>
 
 	* makefile.in: Changes to make 'make dist' work.
 	* README:	Advanced version to 1.0b4
 	* configure.in:
 	* configure:	autoconf 2.59
-	
+
 2008-12-18  Kevin B. Kenny  <kennykb@acm.org>
 
 	* configure: Autoconf 2.59, to conform with Tcl (mandir changes
 	between 2.59 and 2.61). Signed manifest.
-	
+
 2008-12-08  Kevin B. Kenny  <kennykb@acm.org>
 
 	* doc/tdbc_odbc.n: Added man page for the driver.
-	
+
 2008-12-07  Kevin B. Kenny  <kennykb@acm.org>
-	
+
 	* configure.in:
 	* generic/tdbcodbc.c:
 	* library/tdbcodbc.tcl: Advanced version to 1.0b1 in preparation for
@@ -486,19 +486,19 @@
 	* generic/tdbcodbc.c (DatasourceObjCmd):
 	Added the tdbc::odbc::datasource command for adding, configuring
 	and removing data sources.
-	
+
 2008-12-04  Kevin B. Kenny  <kennykb@acm.org>
 
 	* generic/tdbcodc.c (ResultSetInitMethod, GetCell):
 	* tests/tdbcodbc.test (tdbc::odbc-21.2): Added direct transfer of
 	BINARY, VARBINARY, LONGVARBINARY parameters and results.
-	
+
 2008-12-03  Kevin B. Kenny  <kennykb@acm.org>
 
 	* generic/tdbodbc.c:     Added "tdbc::odbc::datasources" and
-	* library/tdbcodbc.tcl:  "tdbc::odbc::drivers" for inspection of 
+	* library/tdbcodbc.tcl:  "tdbc::odbc::drivers" for inspection of
 	* tests/tdbcodbc.test:   available databases.
-	
+
 2008-12-01  Kevin B. Kenny  <kennykb@acm.org>
 
 	* generic/tdbcodbc.c: Added '-encoding' and -timeout' options.
@@ -507,12 +507,12 @@
 	* tests/tdbcodbc.test (tdbc::odbc-19.*): Added rudimentary
 	configuration tests, and rudimentary tests of direct value
 	transfers C <-> SQL.
-	
+
 2008-11-30  Kevin B. Kenny  <kennykb@acm.org>
 
 	* configure.in: Changed PACKAGE_NAME to lowercase 'tdbcodbc'
 			Changed PACKAGE_VERSION to 0.2a1
-	* tclconfig/tcl.m4: 
+	* tclconfig/tcl.m4:
 			Look in a few additional places for dependent packages.
 	* library/tdbcodbc.tcl: Lowercased the 'tdbc' package and advanced the
 	                        version number on which tdbcodbc depends.
@@ -528,25 +528,25 @@
 	* Makefile.in: Changed the script-level package name to tdbc::odbc
 	               for building pkgIndex.tcl
 	* test.mdb: Reverted a commit that corrupted this file.
-	
+
 2008-11-22  Kevin B. Kenny  <kennykb@acm.org>
 
 	* configure.in: Changed configurator so that 8.6 no longer requires a
 	dummy tclooConfig.h.
 	* configure: Autoconf 2.61
-	
+
 2008-06-15  Kevin B. Kenny  <kennykb@acm.org>
 
-	* generic/tdbcodbc.c: 
+	* generic/tdbcodbc.c:
 	* tests/tdbcodbc.test: Removed the default check for Tk. Instead,
 	added a '-parent window' option to the constructor of
 	tdbc::odbc::connection that gives a parent window for the
 	driver manager dialog.
 	Added a 'configure' method to the connection object, and
 	rudimentary tests. (No configuration options yet implemented)
-	
+
 2008-06-11  Kevin B. Kenny  <kennykb@acm.org>
-	
+
 	* generic/tdbcodbc.c: Split [$resultset nextrow] into two primitive
 	methods: [$resultset nextlist] and [$resultset nextdict]. Refactored
 	a little bit of the code that handles result sets.
@@ -554,34 +554,34 @@
 2008-05-24  Kevin B Kenny  <kennykb@acm.org>
 
 	* configure.in: Changed configuration to use TEA_PATH_CONFIG to
-	* aclocal.m4:   locate tcloo and tdbc.  Removed the local code that 
+	* aclocal.m4:   locate tcloo and tdbc.  Removed the local code that
 	                did it from aclocal.m4.
 	* configure:    Autoconf 2.61
-	
+
 2008-05-13  Kevin B. Kenny  <kennykb@acm.org>
 
 	* Makefile (deleted): Removed a superfluous file from an
 		earlier stage of development.
-	* generic/tdbcodbc.c (TablesStmtInitMethod,ResultSetNextrowMethod): 
+	* generic/tdbcodbc.c (TablesStmtInitMethod,ResultSetNextrowMethod):
 		Removed a cut-and-paste error in TablesStmtInitMethod that
 		caused a pointer smash, and added a cast to silence a gcc
 		warning. Changed the 'init2' method on the 'statement'
 		class back to 'init' now that TclOO seems to be getting
 		method resolution correct.
 	* library/tdbcodbc.tcl (tdbc::sqlite::statement constructor):
-		Changed the 'init2' method on 'statement' back to 
+		Changed the 'init2' method on 'statement' back to
 		'init' now that TclOO seems to be getting method resolution
 		correct.
 	* tests/tdbcodbc.test: Corrected misnumbering of tests, and added
 		code to remove the test database on startup to avoid running
 		with old data if a previous test run aborted.
-	
+
 2008-05-10  Kevin B. Kenny  <kennykb@acm.org>
 
 	* tests/tdbcodbc.test (tdbcodbc-9.9): Corrected invalid test numbering.
-	
+
 2008-05-01  Kevin B. Kenny  <kennykb@acm.org>
-	
+
 	* tdbcodbc/Makefile.in:
 	* tdbcodbc/TODO:
 	* tdbcodbc/aclocal.m4:
