@@ -867,15 +867,17 @@ TransferSQLError(
     Tcl_Obj* lineObj;		/* Object holding one diagnostic */
     Tcl_DString bufferDS;	/* Buffer for transferring messages */
 
+    SQLRETURN sqlreturn;
+
     resultObj = Tcl_NewObj();
     codeObj = Tcl_NewStringObj("TDBC", -1);
 
     /* Loop through the diagnostics */
 
     i = 1;
-    while (SQLGetDiagRecW(handleType, handle, i, state, &nativeError,
-			  msg, SQL_MAX_MESSAGE_LENGTH, &msgLen)
-	   != SQL_NO_DATA) {
+    while ((sqlreturn = SQLGetDiagRecW(handleType, handle, i, state, &nativeError,
+				       msg, SQL_MAX_MESSAGE_LENGTH, &msgLen))
+	   != SQL_NO_DATA && sqlreturn >= 0) {
 
 	/* Add the diagnostic to ::errorCode */
 
