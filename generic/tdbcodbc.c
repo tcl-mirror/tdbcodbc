@@ -31,6 +31,14 @@
 
 #include "fakesql.h"
 
+/*
+ * PTR2INT/INT2PTR
+ */
+#if defined(HAVE_STDINT_H) && defined(HAVE_INTPTR_T)
+#  include <stdint.h>
+#  include "intptr_t.h"
+#endif
+
 /* Static data contained in this file */
 
 TCL_DECLARE_MUTEX(hEnvMutex);	/* Mutex protecting the environment handle
@@ -867,15 +875,17 @@ TransferSQLError(
     Tcl_Obj* lineObj;		/* Object holding one diagnostic */
     Tcl_DString bufferDS;	/* Buffer for transferring messages */
 
+    SQLRETURN sqlreturn;
+
     resultObj = Tcl_NewObj();
     codeObj = Tcl_NewStringObj("TDBC", -1);
 
     /* Loop through the diagnostics */
 
     i = 1;
-    while (SQLGetDiagRecW(handleType, handle, i, state, &nativeError,
-			  msg, SQL_MAX_MESSAGE_LENGTH, &msgLen)
-	   != SQL_NO_DATA) {
+    while ((sqlreturn = SQLGetDiagRecW(handleType, handle, i, state, &nativeError,
+				       msg, SQL_MAX_MESSAGE_LENGTH, &msgLen))
+	   != SQL_NO_DATA && sqlreturn >= 0) {
 
 	/* Add the diagnostic to ::errorCode */
 
@@ -1324,9 +1334,9 @@ GetResultSetDescription(
 		 * we've seen it before.
 		 */
 
-		count = (int) Tcl_GetHashValue(nameEntry);
+		count = PTR2INT(Tcl_GetHashValue(nameEntry));
 		++count;
-		Tcl_SetHashValue(nameEntry, (ClientData) count);
+		Tcl_SetHashValue(nameEntry, /*(ClientData)*/ INT2PTR(count));
 		sprintf(numbuf, "#%d", count);
 		Tcl_AppendToObj(colNameObj, numbuf, -1);
 	    }
@@ -1687,7 +1697,7 @@ ConfigureConnection(
 		return status;
 	    }
 	    Tcl_ResetResult(interp);
-	    *hParentWindowPtr = (HWND) w;
+	    *hParentWindowPtr = (HWND) INT2PTR(w);
 	    *connectFlagsPtr = SQL_DRIVER_COMPLETE_REQUIRED;
 	    break;
 
@@ -2006,7 +2016,7 @@ ConnectionEndXcnMethod(
     int objc,			/* Parameter count */
     Tcl_Obj *const objv[]	/* Parameter vector */
 ) {
-    SQLSMALLINT completionType = (SQLSMALLINT) (int) (clientData);
+    SQLSMALLINT completionType = (SQLSMALLINT) PTR2INT(clientData);
     Tcl_Object thisObject = Tcl_ObjectContextObject(objectContext);
 				/* The current connection object */
     ConnectionData* cdata = (ConnectionData*)
@@ -3959,7 +3969,7 @@ ResultSetNextrowMethod(
     Tcl_Obj *const objv[]	/* Parameter vector */
 ) {
 
-    int lists = (int) clientData;
+    int lists = PTR2INT(clientData);
 				/* Flag == 1 if lists are to be returned,
 				 * 0 if dicts are to be returned */
 

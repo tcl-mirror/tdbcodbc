@@ -4,7 +4,7 @@
  *	Stubs tables for the foreign ODBC libraries so that
  *	Tcl extensions can use them without the linker's knowing about them.
  *
- * @CREATED@ 2015-06-26 13:54:02Z by genExtStubs.tcl from ../generic/odbcStubDefs.txt
+ * @CREATED@ 2017-05-17 13:54:37Z by genExtStubs.tcl from ../generic/odbcStubDefs.txt
  *
  * Copyright (c) 2010 by Kevin B. Kenny.
  *
@@ -31,12 +31,12 @@
 
 static const char *const odbcStubLibNames[] = {
     /* @LIBNAMES@: DO NOT EDIT THESE NAMES */
-    "odbc32", "odbc", "libodbc32", "libodbc", NULL
+    "odbc32", "odbc", "libodbc32", "libodbc", "libiodbc", NULL
     /* @END@ */
 };
 static const char *const odbcOptLibNames[] = {
     "odbccp", "odbccp32", "odbcinst",
-    "libodbccp", "libodbccp32", "libodbcinst", NULL
+    "libodbccp", "libodbccp32", "libodbcinst", "libiodbcinst", NULL
 };
 
 /*
