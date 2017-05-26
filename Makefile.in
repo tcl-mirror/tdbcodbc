@@ -354,6 +354,7 @@ dist: dist-clean
 	cp -p $(srcdir)/generic/fakesql.h $(srcdir)/generic/odbcStubDefs.txt \
 		$(srcdir)/generic/odbcStubInit.c $(srcdir)/generic/odbcStubs.h \
 		$(srcdir)/generic/tdbcodbc.c \
+		$(srcdir)/generic/int2ptr_ptr2int.h \
 		$(DIST_DIR)/generic/
 
 	mkdir $(DIST_DIR)/library

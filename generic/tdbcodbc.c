@@ -14,30 +14,28 @@
  */
 
 #ifdef _MSC_VER
-#define _CRT_SECURE_NO_DEPRECATE
+#  define _CRT_SECURE_NO_DEPRECATE
 #endif
 
 #include <tcl.h>
 #include <tclOO.h>
 #include <tdbc.h>
+
 #include <stdio.h>
 #include <string.h>
 
+#ifdef HAVE_STDINT_H
+#  include <stdint.h>
+#endif
+
+#include "int2ptr_ptr2int.h"
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
 #endif
 
 #include "fakesql.h"
-
-/*
- * PTR2INT/INT2PTR
- */
-#if defined(HAVE_STDINT_H) && defined(HAVE_INTPTR_T)
-#  include <stdint.h>
-#  include "intptr_t.h"
-#endif
 
 /* Static data contained in this file */
 
