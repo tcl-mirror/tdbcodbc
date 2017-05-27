@@ -31,10 +31,12 @@
 
 
 /* Uncomment or -DTDBC_NEW_LOADER=1 to use the new loader */
-/* #define TDBC_NEW_LOADER 1*/
+/*#define TDBC_NEW_LOADER 1*/
 
 
 #ifdef TDBC_NEW_LOADER
+
+#include <stdlib.h>
 
 /* Sorted by name asc. */
 static const char *const odbcStubLibNames[] = {
@@ -158,8 +160,8 @@ const char *const tdbcLibFormats[] = {
  *
  * tdbcLoadLib --
  *
- *	Tries to load a shared library using all combinations of
- *	LIBPREFIX, no LIBPREFIX, lib names and lib numbers.
+ *	Tries to load a shared library given a list of lib names and/or
+ *	all combinations of LIBPREFIX, no LIBPREFIX, lib names and lib numbers.
  *	Takes CYGWIN into account.
  *
  * Results:
@@ -173,51 +175,120 @@ const char *const tdbcLibFormats[] = {
 
 static Tcl_LoadHandle
 tdbcLoadLib (
-    Tcl_Interp *interp,
-    const char *const soNames[],
-    const char *const soNumbers[],
-    const char *const soSymbolNames[],
-    const void *soStubDefs,
-    const char *const soFormats[]
+    Tcl_Interp *interp,			/* Receives errors or lib name if successful */
+    const char *const soNames[],	/* Lib names. Kwazy lookup not done if NULL */
+    const char *const soNumbers[],	/* Lib numbers for kwazy lookup */
+    const char *const soSymbolNames[],	/* Passed to Tcl_LoadFile */
+    const void *soStubDefs,		/* Passed to Tcl_LoadFile */
+    const char *soList,			/* Lib name list to try first if not NULL */
+    const char *const soFormats[]	/* Lib name printf formats for kwazy lookup.
+					   Default used if NULL.
+					   Maybe not useful as a parameter. */
 ) {
-    const char *const *nam;
-    const char *const *num;
-    const char *const *fmt;
-    Tcl_Obj *errors;
-    Tcl_Obj *lib;
-    Tcl_LoadHandle handle;
-    int status;
+    const char *const *nam;		/* Name */
+    const char *const *num;		/* Number */
+    const char *const *fmt;		/* Format */
+    Tcl_Obj *lib;			/* Holds lib name during kwazy lookup */
+    Tcl_Obj *result;			/* List of errors or lib name if successful */
+    Tcl_LoadHandle handle;		/* NULL or handle to loaded lib if successful */
 
+    result = NULL; /* Important! This is eventually returned. */
+    handle = NULL; /* Important! This is eventually returned. */
+
+    /*
+     * Try to load a lib from a string claiming to be a list of libs?
+     */
+    if (soList != NULL) {	/* Yes! */
+	Tcl_Obj *l;
+	Tcl_Obj **els;
+	int nels;
+	int i;
+
+	/*
+         * Make list from string.
+	 * Caller is responsible for listability and utf8ness.
+         */
+	l = Tcl_NewStringObj(soList, -1);
+	Tcl_IncrRefCount(l);
+
+	if (Tcl_ListObjGetElements(interp, l, &nels, &els) != TCL_OK) {
+	    Tcl_DecrRefCount(l);
+	    return NULL;
+	}
+
+	result = Tcl_NewListObj(0, NULL);
+	Tcl_IncrRefCount(result);
+
+	/*
+	 * Left-to-right, trying to load a lib at each iteration.
+         */
+	for (i = 0; i < nels; i++) {
+	    if (Tcl_LoadFile(interp, els[i], soSymbolNames, 0, (void *) soStubDefs, &handle) == TCL_OK) {
+		/* Lib found and loaded. Cleanup and setup result. */
+		Tcl_DecrRefCount(result); /* Throw away any accumulated errors. */
+		result = Tcl_DuplicateObj(els[i]);
+		Tcl_IncrRefCount(result);
+		break;
+	    }
+	    Tcl_ListObjAppendElement(NULL, result, Tcl_GetObjResult(interp)); /* Collect error. */
+	    handle = NULL; /* Important! This is eventually returned. */
+	}
+	Tcl_DecrRefCount(l);
+	if (handle != NULL) {
+	    goto loadDone;
+	}
+    }
+
+    /*
+     * At this point no lib list was provided or no lib was found in the list.
+     */
+
+    /*
+     * Done if names not provided.
+     */
+    if (soNames == NULL) {
+	goto loadDone;
+    }
+
+    /*
+     * Use default format(s) if not supplied.
+     */
     if (soFormats == NULL) {
 	soFormats = tdbcLibFormats;
     }
 
-    errors = Tcl_NewListObj(0, NULL);
-    Tcl_IncrRefCount(errors);
-
-    for (nam = &soNames[0]; *nam != NULL; nam++) {
-	for (num = &soNumbers[0]; *num != NULL; num++) {
-	    for (fmt = &soFormats[0]; *fmt != NULL; fmt++) {
-		lib = Tcl_ObjPrintf(*fmt, *nam, (*num[0] == '\0' ? "" : TDBC_SHLIB_SEP), *num);
-		Tcl_IncrRefCount(lib);
-		handle = NULL;
-		status = Tcl_LoadFile(interp, lib, soSymbolNames, 0, (void *) soStubDefs, &handle);
-		if (status == TCL_OK) {
-		    Tcl_SetObjResult(interp, lib);
-		    Tcl_DecrRefCount(lib);
-		    Tcl_DecrRefCount(errors);
-		    return handle;
-		}
-		Tcl_DecrRefCount(lib);
-		Tcl_ListObjAppendElement(NULL, errors, Tcl_GetObjResult(interp));
-	    }
-	}
+    if (result != NULL) {
+	result = Tcl_NewListObj(0, NULL);
+	Tcl_IncrRefCount(result);
     }
 
-    Tcl_SetObjResult(interp, errors);
-    Tcl_DecrRefCount(errors);
+    /*
+     * Try every possible combination (aka Kwazy Lookup).
+     */
+    for (nam =   &soNames[0]; *nam != NULL; nam++) {
+    for (num = &soNumbers[0]; *num != NULL; num++) {
+    for (fmt = &soFormats[0]; *fmt != NULL; fmt++) {
+	lib = Tcl_ObjPrintf(*fmt, *nam, (*num[0] == '\0' ? "" : TDBC_SHLIB_SEP), *num);
+	Tcl_IncrRefCount(lib);
+	if (Tcl_LoadFile(interp, lib, soSymbolNames, 0, (void *) soStubDefs, &handle) == TCL_OK) {
+	    /* Lib found and loaded. Cleanup and setup result. */
+	    Tcl_DecrRefCount(result); /* Throw away any accumulated errors. */
+	    result = lib;
+	    goto loadDone;
+	}
+	Tcl_ListObjAppendElement(NULL, result, Tcl_GetObjResult(interp)); /* Collect error. */
+	Tcl_DecrRefCount(lib);
+	handle = NULL; /* Important! This is eventually returned. */
+    }}}
 
-    return NULL;
+loadDone:
+
+    if (result != NULL) {
+	Tcl_SetObjResult(interp, result);
+	Tcl_DecrRefCount(result);
+    }
+
+    return handle; /* Like I said... */
 }
 
 /*
@@ -242,11 +313,11 @@ OdbcInitStubs(Tcl_Interp* interp,
 				/* Pointer to a second load handle
 				 * that represents the ODBCINST library */
 {
-    int odbcStatus;		/* Status of Tcl library calls */
-    int odbcOptStatus;		/* Status of Tcl library calls */
     Tcl_LoadHandle handle;	/* Handle to a load module */
+    int status;			/* Status of Tcl library calls for ODBC lib */
+    int status2;		/* Status of Tcl library calls for ODBCINST lib */
 
-    SQLConfigDataSourceW = NULL;
+    SQLConfigDataSourceW = NULL;/* Symbols maybe in ODBCINST lib */
     SQLConfigDataSource = NULL;
     SQLInstallerError = NULL;
 
@@ -254,15 +325,19 @@ OdbcInitStubs(Tcl_Interp* interp,
      * Try to load a client library and resolve the ODBC API within it.
      */
 
-    handle = tdbcLoadLib(interp, odbcStubLibNames, odbcStubLibNumbers, odbcSymbolNames, odbcStubs, NULL);
-    odbcStatus = (handle == NULL ? TCL_ERROR : TCL_OK);
+    handle = tdbcLoadLib(interp,
+	odbcStubLibNames, odbcStubLibNumbers,
+	odbcSymbolNames, odbcStubs,
+	getenv("TDBC_ODBC_ODBCLIBS"), NULL
+    );
+    status = (handle == NULL ? TCL_ERROR : TCL_OK);
 
     /*
-     * We've run out of library names (in which case odbcStatus==TCL_ERROR
+     * We've run out of library names (in which case status==TCL_ERROR
      * and the error message reflects the last unsuccessful load attempt).
      */
 
-    if (odbcStatus != TCL_OK) {
+    if (status != TCL_OK) {
 	return NULL;
     }
 
@@ -270,10 +345,14 @@ OdbcInitStubs(Tcl_Interp* interp,
      * If a client library is found, then try to load ODBCINST as well.
      */
 
-    *handle2Ptr = tdbcLoadLib(interp, odbcOptLibNames, odbcOptLibNumbers, NULL, NULL, NULL);
-    odbcOptStatus = (*handle2Ptr == NULL ? TCL_ERROR : TCL_OK);
+    *handle2Ptr = tdbcLoadLib(interp,
+	odbcOptLibNames, odbcOptLibNumbers,
+	NULL, NULL,
+	getenv("TDBC_ODBC_ODBCINSTLIBS"), NULL
+    );
+    status2 = (*handle2Ptr == NULL ? TCL_ERROR : TCL_OK);
 
-    if (odbcOptStatus == TCL_OK) {
+    if (status2 == TCL_OK) {
 	SQLConfigDataSourceW =
 	    (BOOL (INSTAPI*)(HWND, WORD, LPCWSTR, LPCWSTR))
 	    Tcl_FindSymbol(NULL, *handle2Ptr, "SQLConfigDataSourceW");
