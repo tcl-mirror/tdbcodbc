@@ -1334,7 +1334,7 @@ GetResultSetDescription(
 
 		count = PTR2INT(Tcl_GetHashValue(nameEntry));
 		++count;
-		Tcl_SetHashValue(nameEntry, /*(ClientData)*/ INT2PTR(count));
+		Tcl_SetHashValue(nameEntry, INT2PTR(count));
 		sprintf(numbuf, "#%d", count);
 		Tcl_AppendToObj(colNameObj, numbuf, -1);
 	    }
@@ -1695,7 +1695,7 @@ ConfigureConnection(
 		return status;
 	    }
 	    Tcl_ResetResult(interp);
-	    *hParentWindowPtr = (HWND) INT2PTR(w);
+	    *hParentWindowPtr = INT2PTR(w);
 	    *connectFlagsPtr = SQL_DRIVER_COMPLETE_REQUIRED;
 	    break;
 
