@@ -225,7 +225,7 @@ tdbcLoadLib (
 	for (i = 0; i < nels; i++) {
 	    if (Tcl_LoadFile(interp, els[i], soSymbolNames, 0, (void *) soStubDefs, &handle) == TCL_OK) {
 		/* Lib found and loaded. Cleanup and setup result. */
-		Tcl_DecrRefCount(result); /* Throw away any accumulated errors. */
+		Tcl_DecrRefCount(result); /* Throw away any errors collected. */
 		result = Tcl_DuplicateObj(els[i]);
 		Tcl_IncrRefCount(result);
 		break;
@@ -257,7 +257,7 @@ tdbcLoadLib (
 	soFormats = tdbcLibFormats;
     }
 
-    if (result != NULL) {
+    if (result == NULL) {
 	result = Tcl_NewListObj(0, NULL);
 	Tcl_IncrRefCount(result);
     }
@@ -272,7 +272,7 @@ tdbcLoadLib (
 	Tcl_IncrRefCount(lib);
 	if (Tcl_LoadFile(interp, lib, soSymbolNames, 0, (void *) soStubDefs, &handle) == TCL_OK) {
 	    /* Lib found and loaded. Cleanup and setup result. */
-	    Tcl_DecrRefCount(result); /* Throw away any accumulated errors. */
+	    Tcl_DecrRefCount(result); /* Throw away any errors collected. */
 	    result = lib;
 	    goto loadDone;
 	}
