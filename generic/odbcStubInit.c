@@ -4,7 +4,7 @@
  *	Stubs tables for the foreign ODBC libraries so that
  *	Tcl extensions can use them without the linker's knowing about them.
  *
- * @CREATED@ 2017-05-17 13:54:37Z by genExtStubs.tcl from ../generic/odbcStubDefs.txt
+ * @CREATED@ 2017-06-05 16:16:37Z by genExtStubs.tcl from ../generic/odbcStubDefs.txt
  *
  * Copyright (c) 2010 by Kevin B. Kenny.
  *
@@ -40,7 +40,7 @@
 
 /* Sorted by name asc. */
 static const char *const odbcStubLibNames[] = {
-    "iodbc", "odbc", "odbc32", NULL
+    "odbc", "odbc32", NULL
 };
 /* Sorted by num desc. No leading dots. Empty first. */
 static const char *const odbcStubLibNumbers[] = {
@@ -48,7 +48,7 @@ static const char *const odbcStubLibNumbers[] = {
 };
 /* Sorted by name asc. */
 static const char *const odbcOptLibNames[] = {
-    "iodbcinst", "odbccp", "odbccp32", "odbcinst", NULL
+    "odbccp", "odbccp32", "odbcinst", NULL
 };
 /* Sorted by num desc. No leading dots. Empty first. */
 static const char *const odbcOptLibNumbers[] = {
@@ -59,12 +59,12 @@ static const char *const odbcOptLibNumbers[] = {
 
 static const char *const odbcStubLibNames[] = {
     /* @LIBNAMES@: DO NOT EDIT THESE NAMES */
-    "odbc32", "odbc", "libodbc32", "libodbc", "libiodbc", NULL
+    "odbc32", "odbc", "libodbc32", "libodbc", NULL
     /* @END@ */
 };
 static const char *const odbcOptLibNames[] = {
     "odbccp", "odbccp32", "odbcinst",
-    "libodbccp", "libodbccp32", "libodbcinst", "libiodbcinst", NULL
+    "libodbccp", "libodbccp32", "libodbcinst", NULL
 };
 
 #endif
