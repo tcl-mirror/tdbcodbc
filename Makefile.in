@@ -367,6 +367,7 @@ dist: dist-clean
 
 	mkdir $(DIST_DIR)/win
 	cp -p $(srcdir)/win/makefile.vc $(srcdir)/win/nmakehlp.c \
+		$(srcdir)/win/targets.vc $(srcdir)/win/rules-ext.vc \
 		$(srcdir)/win/rules.vc $(DIST_DIR)/win/
 
 	(cd $(DIST_ROOT); $(COMPRESS);)
