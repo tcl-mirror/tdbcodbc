@@ -11,8 +11,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id: Makefile.in,v 1.64 2007/10/23 22:08:06 hobbs Exp $
 
 #========================================================================
 # Nothing of the variables below this line should need to be changed.
@@ -63,7 +61,7 @@ exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 libdir		= @libdir@
 includedir	= @includedir@
-datarootdir     = @datarootdir@
+datarootdir	= @datarootdir@
 datadir		= @datadir@
 mandir		= @mandir@
 
@@ -76,13 +74,13 @@ pkgincludedir	= $(includedir)/$(PKG_DIR)
 
 top_builddir	= .
 
-INSTALL_OPTIONS =
-INSTALL         = $(SHELL) $(srcdir)/tclconfig/install-sh -c ${INSTALL_OPTIONS}
-INSTALL_DATA_DIR = ${INSTALL} -d -m 755
-INSTALL_PROGRAM = ${INSTALL} -m 755
-INSTALL_DATA    = ${INSTALL} -m 444
-INSTALL_SCRIPT  = ${INSTALL_PROGRAM}
-INSTALL_LIBRARY = ${INSTALL_DATA}
+INSTALL_OPTIONS	=
+INSTALL		= @INSTALL@ $(INSTALL_OPTIONS)
+INSTALL_DATA_DIR = @INSTALL_DATA_DIR@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_SCRIPT	= @INSTALL_SCRIPT@
+INSTALL_LIBRARY	= @INSTALL_LIBRARY@
 
 PACKAGE_NAME	= @PACKAGE_NAME@
 PACKAGE_VERSION	= @PACKAGE_VERSION@
@@ -134,16 +132,16 @@ PKG_ENV		= @LD_LIBRARY_PATH_VAR@="$(EXTRA_PATH):$(@LD_LIBRARY_PATH_VAR@)" \
                   TDBCODBC_LIBRARY=`@CYGPATH@ $(srcdir)/library`
 
 TCLSH_PROG	= @TCLSH_PROG@
-TCLSH   	= $(PKG_ENV) $(TCLSH_ENV) $(TCLSH_PROG)
+TCLSH		= $(PKG_ENV) $(TCLSH_ENV) $(TCLSH_PROG)
 
 #WISH_ENV	= TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library`
 #WISH_PROG	= @WISH_PROG@
-#WISH   	= $(PKG_ENV) $(TCLSH_ENV) $(WISH_ENV) $(WISH_PROG)
+#WISH		= $(PKG_ENV) $(TCLSH_ENV) $(WISH_ENV) $(WISH_PROG)
 
 SHARED_BUILD	= @SHARED_BUILD@
 
 INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@
-# INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@
+#INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@
 
 PKG_CFLAGS	= @PKG_CFLAGS@
 
@@ -168,13 +166,15 @@ COMPILE		= $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(C
 VALGRIND		= valgrind
 VALGRINDARGS		= --tool=memcheck --num-callers=16 --leak-resolution=high --leak-check=yes --show-reachable=yes -v
 
+.SUFFIXES: .c .$(OBJEXT)
+
 #========================================================================
 # Start of user-definable TARGETS section
 #========================================================================
 
 #========================================================================
 # TEA TARGETS.  Please note that the "libraries:" target refers to platform
-# independent files, and the "binaries:" target inclues executable programs and
+# independent files, and the "binaries:" target includes executable programs and
 # platform-dependent libraries.  Modify these targets so that they install
 # the various pieces of your package.  The make and install rules
 # for the BINARIES that you specified above have already been done.
@@ -324,49 +324,53 @@ COMPRESS	= tar zcvf $(PKG_DIR).tar.gz $(PKG_DIR)
 DIST_ROOT	= /tmp/dist
 DIST_DIR	= $(DIST_ROOT)/$(PKG_DIR)
 
+DIST_INSTALL_DATA	= CPPROG='cp -p' $(INSTALL) -m 644
+DIST_INSTALL_SCRIPT	= CPPROG='cp -p' $(INSTALL) -m 755
+
 dist-clean:
 	rm -rf $(DIST_DIR) $(DIST_ROOT)/$(PKG_DIR).tar.*
 
 dist: dist-clean
-	mkdir -p $(DIST_DIR)
-	cp -p $(srcdir)/ChangeLog $(srcdir)/README* $(srcdir)/license* \
-		$(srcdir)/aclocal.m4 $(srcdir)/configure $(srcdir)/*.in \
-		$(srcdir)/configure.ac $(DIST_DIR)/
-	chmod 664 $(DIST_DIR)/Makefile.in $(DIST_DIR)/aclocal.m4
-	chmod 775 $(DIST_DIR)/configure $(DIST_DIR)/configure.ac
+	$(INSTALL_DATA_DIR) $(DIST_DIR)
+	$(DIST_INSTALL_DATA) $(srcdir)/license.terms \
+		$(srcdir)/ChangeLog $(srcdir)/README \
+		$(srcdir)/aclocal.m4 $(srcdir)/configure.ac \
+		$(srcdir)/Makefile.in $(srcdir)/pkgIndex.tcl.in \
+		$(DIST_DIR)/
+	$(DIST_INSTALL_SCRIPT) $(srcdir)/configure $(DIST_DIR)/
 
 	for i in $(srcdir)/*.[ch]; do \
 	    if [ -f $$i ]; then \
-		cp -p $$i $(DIST_DIR)/ ; \
+		$(DIST_INSTALL_DATA) $$i $(DIST_DIR)/ ; \
 	    fi; \
 	done;
 
-	mkdir $(DIST_DIR)/tclconfig
-	cp $(srcdir)/tclconfig/install-sh $(srcdir)/tclconfig/tcl.m4 \
+	$(INSTALL_DATA_DIR) $(DIST_DIR)/tclconfig
+	$(DIST_INSTALL_DATA) $(srcdir)/tclconfig/README.txt \
+		$(srcdir)/tclconfig/tcl.m4 $(srcdir)/tclconfig/install-sh \
 		$(DIST_DIR)/tclconfig/
-	chmod 664 $(DIST_DIR)/tclconfig/tcl.m4
-	chmod +x $(DIST_DIR)/tclconfig/install-sh
 
-	mkdir $(DIST_DIR)/doc
-	cp -p $(srcdir)/doc/tdbc_odbc.n $(DIST_DIR)/doc/
+	$(INSTALL_DATA_DIR) $(DIST_DIR)/doc
+	$(DIST_INSTALL_DATA) $(srcdir)/doc/tdbc_odbc.n $(DIST_DIR)/doc/
 
-	mkdir $(DIST_DIR)/generic
-	cp -p $(srcdir)/generic/fakesql.h $(srcdir)/generic/odbcStubDefs.txt \
+	$(INSTALL_DATA_DIR) $(DIST_DIR)/generic
+	$(DIST_INSTALL_DATA) \
+		$(srcdir)/generic/fakesql.h $(srcdir)/generic/odbcStubDefs.txt \
 		$(srcdir)/generic/odbcStubInit.c $(srcdir)/generic/odbcStubs.h \
 		$(srcdir)/generic/tdbcodbc.c \
 		$(srcdir)/generic/int2ptr_ptr2int.h \
 		$(DIST_DIR)/generic/
 
-	mkdir $(DIST_DIR)/library
-	cp -p $(srcdir)/library/tdbcodbc.tcl $(DIST_DIR)/library/
+	$(INSTALL_DATA_DIR) $(DIST_DIR)/library
+	$(DIST_INSTALL_DATA) $(srcdir)/library/tdbcodbc.tcl $(DIST_DIR)/library/
 
-	mkdir $(DIST_DIR)/tests
-	cp -p $(srcdir)/tests/all.tcl $(srcdir)/tests/tdbcodbc.test \
+	$(INSTALL_DATA_DIR) $(DIST_DIR)/tests
+	$(DIST_INSTALL_DATA) $(srcdir)/tests/all.tcl $(srcdir)/tests/tdbcodbc.test \
 		$(srcdir)/tests/test.mdb \
 		$(DIST_DIR)/tests/
 
-	mkdir $(DIST_DIR)/win
-	cp -p $(srcdir)/win/makefile.vc $(srcdir)/win/nmakehlp.c \
+	$(INSTALL_DATA_DIR) $(DIST_DIR)/win
+	$(DIST_INSTALL_DATA) $(srcdir)/win/makefile.vc $(srcdir)/win/nmakehlp.c \
 		$(srcdir)/win/targets.vc $(srcdir)/win/rules-ext.vc \
 		$(srcdir)/win/rules.vc $(DIST_DIR)/win/
 
@@ -420,8 +424,8 @@ install-lib-binaries: binaries
 	@$(INSTALL_DATA_DIR) $(DESTDIR)$(pkglibdir)
 	@list='$(lib_BINARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(INSTALL_PROGRAM) $$p $(DESTDIR)$(pkglibdir)/$$p"; \
-	    $(INSTALL_PROGRAM) $$p $(DESTDIR)$(pkglibdir)/$$p; \
+	    echo " $(INSTALL_LIBRARY) $$p $(DESTDIR)$(pkglibdir)/$$p"; \
+	    $(INSTALL_LIBRARY) $$p $(DESTDIR)$(pkglibdir)/$$p; \
 	    stub=`echo $$p|sed -e "s/.*\(stub\).*/\1/"`; \
 	    if test "x$$stub" = "xstub"; then \
 		echo " $(RANLIB_STUB) $(DESTDIR)$(pkglibdir)/$$p"; \
@@ -469,8 +473,6 @@ install-bin-binaries: binaries
 	    $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/$$p; \
 	  fi; \
 	done
-
-.SUFFIXES: .c .$(OBJEXT)
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \
