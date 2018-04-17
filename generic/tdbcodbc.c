@@ -820,7 +820,7 @@ GetWCharStringFromObj(
     char* bytes = Tcl_GetString(obj);
 				/* UTF-8 representation of the input string */
     int i;
-    Tcl_UniChar ch;
+    Tcl_UniChar ch = 0;
 
     for (i = 0; i < len; ++i) {
 	bytes += Tcl_UtfToUniChar(bytes, &ch);
