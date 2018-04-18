@@ -783,7 +783,7 @@ DStringAppendWChars(
     int len			/* Length of the input string in characters */
 ) {
     int i;
-    char buf[TCL_UTF_MAX];
+    char buf[4] = "";
     for (i = 0; i < len; ++i) {
 	int bytes = Tcl_UniCharToUtf((int) ws[i], buf);
 	Tcl_DStringAppend(ds, buf, bytes);
