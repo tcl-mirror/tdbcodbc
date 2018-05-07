@@ -59,12 +59,26 @@ static const char *const odbcOptLibNumbers[] = {
 
 static const char *const odbcStubLibNames[] = {
     /* @LIBNAMES@: DO NOT EDIT THESE NAMES */
-    "odbc32", "odbc", "libodbc32", "libodbc", NULL
+#if defined(__APPLE__)
+    "libiodbc.2",
+#elif defined(__OpenBSD__)
+    "libiodbc",
+#else
+    "odbc32", "odbc", "libodbc32", "libodbc", "libiodbc",
+#endif
+    NULL
     /* @END@ */
 };
 static const char *const odbcOptLibNames[] = {
+#if defined(__APPLE__)
+    "libiodbcinst.2",
+#elif defined(__OpenBSD__)
+    "libiodbcinst",
+#else
     "odbccp", "odbccp32", "odbcinst",
-    "libodbccp", "libodbccp32", "libodbcinst", NULL
+    "libodbccp", "libodbccp32", "libodbcinst", "libiodbcinst",
+#endif
+    NULL
 };
 
 #endif
