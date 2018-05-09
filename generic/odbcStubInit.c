@@ -109,6 +109,7 @@ static const char *const odbcSymbolNames[] = {
     "SQLGetData",
     "SQLGetDiagFieldA",
     "SQLGetDiagRecW",
+    "SQLGetInfoW",
     "SQLGetTypeInfo",
     "SQLMoreResults",
     "SQLNumParams",
