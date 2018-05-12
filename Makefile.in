@@ -235,27 +235,27 @@ test: test-jet test-sqlserver test-sqlite
 
 test-jet: binaries libraries
 	@echo testing tdbcodbc against Jet
-	TDBCODBC_TYPE=jet \
+	TDBCODBC_TEST_TYPE=jet \
 		$(TCLSH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) \
 		-load "package ifneeded tdbc::odbc $(PACKAGE_VERSION) \
 			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` $(PACKAGE_NAME)]"
 
 test-sqlserver: binaries libraries
 	@echo testing tdbcodbc against SQL Server
-	TDBCODBC_TYPE=sqlserver \
+	TDBCODBC_TEST_TYPE=sqlserver \
 		$(TCLSH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) \
 		-load "package ifneeded tdbc::odbc ${PACKAGE_VERSION} \
 			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` $(PACKAGE_NAME)]"
 
 test-sqlite: binaries libraries
 	@echo testing tdbcodbc against SQLite
-	TDBCODBC_TYPE=sqlite \
+	TDBCODBC_TEST_TYPE=sqlite \
 		$(TCLSH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) \
 		-load "package ifneeded tdbc::odbc ${PACKAGE_VERSION} \
 			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` $(PACKAGE_NAME)]"
 
 valgrind-sqlite: binaries libraries
-	TDBCODBC_TYPE=sqlite \
+	TDBCODBC_TEST_TYPE=sqlite \
 	$(PKG_ENV) $(TCLSH_ENV) \
 	LD_PRELOAD=$(PKG_LIB_FILE) \
 	$(VALGRIND) $(VALGRINDARGS) \

@@ -12,7 +12,6 @@
 #-----------------------------------------------------------------------------
 
 * STUBSTRUCT: odbcStubs
-* LIBRARY: odbc32 odbc libodbc32 libodbc
 * CONVENTION: SQL_API
 
 SQLRETURN SQLAllocHandle(SQLSMALLINT,SQLHANDLE,SQLHANDLE*);
