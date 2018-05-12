@@ -4,7 +4,7 @@
  *	Stubs tables for the foreign ODBC libraries so that
  *	Tcl extensions can use them without the linker's knowing about them.
  *
- * @CREATED@ 2017-06-05 16:16:37Z by genExtStubs.tcl from ../generic/odbcStubDefs.txt
+ * @CREATED@ 2018-05-12 16:18:48Z by genExtStubs.tcl from odbcStubDefs.txt
  *
  * Copyright (c) 2010 by Kevin B. Kenny.
  *
@@ -58,13 +58,26 @@ static const char *const odbcOptLibNumbers[] = {
 #else
 
 static const char *const odbcStubLibNames[] = {
-    /* @LIBNAMES@: DO NOT EDIT THESE NAMES */
-    "odbc32", "odbc", "libodbc32", "libodbc", NULL
+#if defined(__APPLE__)
+    "libiodbc.2",
+#elif defined(__OpenBSD__)
+    "libiodbc",
+#else
+    "odbc32", "odbc", "libodbc32", "libodbc", "libiodbc",
+#endif
+    NULL
     /* @END@ */
 };
 static const char *const odbcOptLibNames[] = {
+#if defined(__APPLE__)
+    "libiodbcinst.2",
+#elif defined(__OpenBSD__)
+    "libiodbcinst",
+#else
     "odbccp", "odbccp32", "odbcinst",
-    "libodbccp", "libodbccp32", "libodbcinst", NULL
+    "libodbccp", "libodbccp32", "libodbcinst", "libiodbcinst",
+#endif
+    NULL
 };
 
 #endif
@@ -95,6 +108,7 @@ static const char *const odbcSymbolNames[] = {
     "SQLGetData",
     "SQLGetDiagFieldA",
     "SQLGetDiagRecW",
+    "SQLGetInfoW",
     "SQLGetTypeInfo",
     "SQLMoreResults",
     "SQLNumParams",
