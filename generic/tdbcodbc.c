@@ -785,7 +785,7 @@ DStringAppendWChars(
     int len			/* Length of the input string in characters */
 ) {
     int i;
-    char buf[TCL_UTF_MAX];
+    char buf[4] = "";
 
     if (sizeofSQLWCHAR == sizeof(unsigned short)) {
 	unsigned short* ptr16 = (unsigned short*) ws;
@@ -795,22 +795,6 @@ DStringAppendWChars(
 	    int bytes;
 
 	    ch = ptr16[i];
-	    if (ch > 0x10ffff) {
-		ch = 0xfffd;
-	    }
-#if TCL_UTF_MAX >= 4
-	    /* Collapse a surrogate pair, if any. */
-	    if (ch >= 0xd800 && ch <= 0xdbff) {
-		if (i + 1 < len) {
-		    unsigned int ch2 = ptr16[i+1];
-
-		    if (ch2 >= 0xdc00 && ch2 <= 0xdfff) {
-			ch = ((ch & 0x3ff) << 10) + 0x10000 + (ch2 & 0x3ff);
-			i++;
-		    }
-		}
-	    }
-#endif
 	    bytes = Tcl_UniCharToUtf(ch, buf);
 	    Tcl_DStringAppend(ds, buf, bytes);
 	}
@@ -825,19 +809,6 @@ DStringAppendWChars(
 	    if (ch > 0x10ffff) {
 		ch = 0xfffd;
 	    }
-#if TCL_UTF_MAX >= 4
-	    /* Collapse a surrogate pair, if any. */
-	    if (ch >= 0xd800 && ch <= 0xdbff) {
-		if (i + 1 < len) {
-		    unsigned int ch2 = ptr32[i+1];
-
-		    if (ch2 >= 0xdc00 && ch2 <= 0xdfff) {
-			ch = ((ch & 0x3ff) << 10) + 0x10000 + (ch2 & 0x3ff);
-			i++;
-		    }
-		}
-	    }
-#endif
 	    bytes = Tcl_UniCharToUtf(ch, buf);
 	    Tcl_DStringAppend(ds, buf, bytes);
 	}
@@ -877,12 +848,10 @@ GetWCharStringFromObj(
     Tcl_UniChar ch = 0;
 
     len = (len + 1) * sizeofSQLWCHAR;
-#if TCL_UTF_MAX > 4
     if (sizeofSQLWCHAR < sizeof(Tcl_UniChar)) {
 	len *= 2;	/* doubled space for surrogates */
 	shrink = 1;
     }
-#endif
     retval = wcPtr = (SQLWCHAR*) ckalloc(len);
 
     if (sizeofSQLWCHAR == sizeof(unsigned short)) {
@@ -923,7 +892,7 @@ GetWCharStringFromObj(
 		ch = *bytes++ & 0x00ff;
 	    }
 	    uch = ch;
-#if TCL_UTF_MAX == 4
+#if TCL_UTF_MAX <= 4
 	    if ((uch & 0xfc00) == 0xd800) {
 		if (Tcl_UtfCharComplete(bytes, end - bytes)) {
 		    len = Tcl_UtfToUniChar(bytes, &ch);
