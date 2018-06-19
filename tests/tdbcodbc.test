@@ -3666,8 +3666,6 @@ test tdbc::odbc-30.3 {Multiple result sets - try to read past end} {*}{
 		    if {[$resultset nextresults] == 0} break
 		}
 	        lappend rowsets [catch {$resultset nextresults} msg] $msg
-		lappend rowsets [catch {$resultset nextrow foo} msg] \
-		    $::errorCode
 		set rowsets
 	    } results
 	    rename $resultset {}
@@ -3677,7 +3675,7 @@ test tdbc::odbc-30.3 {Multiple result sets - try to read past end} {*}{
 	set results
     }
     -match glob
-    -result {{{idnum 2 name wilma}} 0 0 1 {TDBC GENERAL_ERROR HY* *}}
+    -result {{{idnum 2 name wilma}} 0 0}
 }
 
 test tdbc::odbc-30.4 {Multiple result sets - foreach} {*}{
