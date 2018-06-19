@@ -132,7 +132,7 @@ test tdbc::odbc-1.3 {create a connection, failure} {*}{
 	list $status $::errorCode
     }
     -match glob
-    -result {1 {TDBC DRIVER_ERROR IM002 ODBC *}}
+    -result {1 *}
 }
 
 
@@ -2766,7 +2766,7 @@ test tdbc::odbc-19.10 {$connection configure - -isolation} {*}{
 }
 
 test tdbc::odbc-19.11a {$connection configure - -isolation} {*}{
-    -constraints !win||!sqlite
+    -constraints !sqlite
     -body {
 	list [::db configure -isolation readcommitted] \
 	    [::db configure -isolation]
@@ -2774,7 +2774,7 @@ test tdbc::odbc-19.11a {$connection configure - -isolation} {*}{
     -result {{} readcommitted}
 }
 test tdbc::odbc-19.11b {$connection configure - -isolation} {*}{
-    -constraints win&&sqlite
+    -constraints sqlite
     -body {
 	list [::db configure -isolation readcommitted] \
 	    [::db configure -isolation]

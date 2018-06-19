@@ -3928,13 +3928,20 @@ ResultSetConstructor(
 	return TCL_ERROR;
     }
 
-    /* Determine and store the row count */
+    /* Determine and store the row count. Note: iodbc makes it illegal
+     * to call SQLRowCount after an operation has returned SQL_NO_DATA,
+     * so bypass the SQLRowCount call if there are no results.
+     */
 
-    rc = SQLRowCount(rdata->hStmt, &(rdata->rowCount));
-    if (!SQL_SUCCEEDED(rc)) {
-	TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt,
-			 "(counting rows in the result)");
-	return TCL_ERROR;
+    if (rc == SQL_NO_DATA) {
+	rdata->rowCount = 0;
+    } else {
+	rc = SQLRowCount(rdata->hStmt, &(rdata->rowCount));
+	if (!SQL_SUCCEEDED(rc)) {
+	    TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt,
+			     "(counting rows in the result)");
+	    return TCL_ERROR;
+	}
     }
 
     return TCL_OK;
