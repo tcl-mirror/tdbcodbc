@@ -2237,7 +2237,7 @@ test tdbc::odbc-14.4 {commit - not in transaction} {*}{
 	list [catch {::db commit} result] $result $::errorCode
     }
     -match glob
-    -result {1 {no transaction is in progress} {TDBC GENERAL_ERROR HY010 ODBC *}}
+    -result {1 {no transaction is in progress} {TDBC GENERAL_ERROR HY* ODBC *}}
 }
 
 test tdbc::odbc-14.5 {rollback - not in transaction} {*}{
@@ -2245,7 +2245,7 @@ test tdbc::odbc-14.5 {rollback - not in transaction} {*}{
 	list [catch {::db rollback} result] $result $::errorCode
     }
     -match glob
-    -result {1 {no transaction is in progress} {TDBC GENERAL_ERROR HY010 ODBC *}}
+    -result {1 {no transaction is in progress} {TDBC GENERAL_ERROR HY* ODBC *}}
 }
 
 test tdbc::odbc-14.6 {empty transaction} {*}{
@@ -2701,7 +2701,8 @@ test tdbc::odbc-19.3 {$connection configure - inappropriate arg} {*}{
     -body {
 	list [catch {::db configure -parent} result] $::errorCode
     }
-    -result {1 {TDBC GENERAL_ERROR HY010 ODBC -1}}
+    -match glob
+    -result {1 {TDBC GENERAL_ERROR HY* ODBC -1}}
 }
 
 test tdbc::odbc-19.4 {$connection configure - set unknown arg} {*}{
@@ -2717,7 +2718,8 @@ test tdbc::odbc-19.5 {$connection configure - set inappropriate arg} {*}{
     -body {
 	list [catch {::db configure -parent .} result] $::errorCode
     }
-    -result {1 {TDBC GENERAL_ERROR HY010 ODBC -1}}
+    -match glob
+    -result {1 {TDBC GENERAL_ERROR HY* ODBC -1}}
 }
 
 test tdbc::odbc-19.6 {$connection configure - wrong # args} {*}{
@@ -3062,7 +3064,7 @@ test tdbc::odbc-25.1a {error code} {*}{
 	} result] $result $::errorCode
     }
     -match glob
-    -result {1 * {TDBC GENERAL_ERROR HY000 ODBC *}}
+    -result {1 * {TDBC GENERAL_ERROR HY* ODBC *}}
 }
 
 test tbdc::odbc-25.1b {error code} {*}{
@@ -3675,7 +3677,7 @@ test tdbc::odbc-30.3 {Multiple result sets - try to read past end} {*}{
 	set results
     }
     -match glob
-    -result {{{idnum 2 name wilma}} 0 0 1 {TDBC GENERAL_ERROR HY010 *}}
+    -result {{{idnum 2 name wilma}} 0 0 1 {TDBC GENERAL_ERROR HY* *}}
 }
 
 test tdbc::odbc-30.4 {Multiple result sets - foreach} {*}{
