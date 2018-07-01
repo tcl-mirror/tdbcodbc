@@ -362,12 +362,6 @@ dist: dist-clean
 	    $(srcdir)/pkgIndex.tcl.in \
 	    $(DIST_DIR)/
 
-	for i in $(srcdir)/*.[ch]; do \
-	    if [ -f $$i ]; then \
-		$(DIST_INSTALL_DATA) $$i $(DIST_DIR)/ ; \
-	    fi; \
-	done;
-
 	$(INSTALL_DATA_DIR) $(DIST_DIR)/doc
 	$(DIST_INSTALL_DATA) $(srcdir)/doc/tdbc_odbc.n $(DIST_DIR)/doc/
 

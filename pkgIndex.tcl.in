@@ -1,4 +1,4 @@
-# Package index file for tdbc::odbc
+# Index file to load the TDBC ODBC package.
 
 if {[catch {package require Tcl @TCL_VERSION_REQ@}]} {
     return
