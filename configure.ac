@@ -135,13 +135,6 @@ TEA_ADD_STUB_SOURCES()
 TEA_ADD_TCL_SOURCES([library/tdbcodbc.tcl])
 
 #--------------------------------------------------------------------
-# The new loader needs to know the shared lib suffix.
-#--------------------------------------------------------------------
-
-AC_DEFINE_UNQUOTED(TCL_SHLIB_EXT,"${TCL_SHLIB_SUFFIX}",
-    [What is the default extension for shared libraries?])
-
-#--------------------------------------------------------------------
 # __CHANGE__
 #
 # You can add more files to clean if your extension creates any extra
