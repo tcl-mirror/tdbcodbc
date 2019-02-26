@@ -56,7 +56,7 @@ static int sizeofSQLWCHAR = sizeof(SQLWCHAR);
  * Objects to create within the literal pool
  */
 
-const char* LiteralValues[] = {
+const char* const LiteralValues[] = {
     "0",
     "1",
     "-encoding",
@@ -1000,7 +1000,7 @@ TransferSQLError(
 	    Tcl_ListObjAppendElement(NULL, codeObj,
 				     Tcl_NewStringObj("ODBC", -1));
 	}
-	Tcl_ListObjAppendElement(NULL, codeObj, Tcl_NewIntObj(nativeError));
+	Tcl_ListObjAppendElement(NULL, codeObj, Tcl_NewWideIntObj(nativeError));
 
 	/* Add the error message to the return value */
 
@@ -1644,7 +1644,7 @@ ConfigureConnection(
 	}
 	Tcl_ListObjAppendElement(NULL, retval, literals[LIT_READONLY]);
 	Tcl_ListObjAppendElement(NULL, retval,
-				 Tcl_NewIntObj(mode == SQL_MODE_READ_ONLY));
+				 Tcl_NewWideIntObj(mode == SQL_MODE_READ_ONLY));
 
 	/* -timeout */
 
@@ -1661,7 +1661,7 @@ ConfigureConnection(
 	}
 	Tcl_ListObjAppendElement(NULL, retval, literals[LIT_TIMEOUT]);
 	Tcl_ListObjAppendElement(NULL, retval,
-				 Tcl_NewIntObj(1000 * (int) seconds));
+				 Tcl_NewWideIntObj(1000 * (Tcl_WideInt)seconds));
 
 	/* end of options */
 
@@ -1672,8 +1672,8 @@ ConfigureConnection(
 
 	/* look up a single configuration option */
 
-	if (Tcl_GetIndexFromObj(interp, objv[0], options, "option",
-				0, &indx) != TCL_OK) {
+	if (Tcl_GetIndexFromObjStruct(interp, objv[0], options, sizeof(char *),
+				"option", 0, &indx) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 
@@ -1722,7 +1722,7 @@ ConfigureConnection(
 		return TCL_ERROR;
 	    }
 	    Tcl_SetObjResult(interp,
-			     Tcl_NewIntObj(mode == SQL_MODE_READ_ONLY));
+			     Tcl_NewWideIntObj(mode == SQL_MODE_READ_ONLY));
 	    break;
 
 	case COPTION_TIMEOUT:
@@ -1737,7 +1737,7 @@ ConfigureConnection(
 		    return TCL_ERROR;
 		}
 	    }
-	    Tcl_SetObjResult(interp, Tcl_NewIntObj(1000 * (int) seconds));
+	    Tcl_SetObjResult(interp, Tcl_NewWideIntObj(1000 * (Tcl_WideInt) seconds));
 	    break;
 
 	}
@@ -1750,8 +1750,8 @@ ConfigureConnection(
 
     for (i = 0; i < objc; i+=2) {
 
-	if (Tcl_GetIndexFromObj(interp, objv[i], options, "option",
-				0, &indx) != TCL_OK) {
+	if (Tcl_GetIndexFromObjStruct(interp, objv[i], options, sizeof(char *),
+				"option", 0, &indx) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	switch (indx) {
@@ -1816,7 +1816,7 @@ ConfigureConnection(
 
 	    /* Make sure that Tk is present. */
 
-	    if (Tcl_PkgPresent(interp, "Tk", "8.4", 0) == NULL) {
+	    if (Tcl_PkgPresentEx(interp, "Tk", "8.4", 0, NULL) == NULL) {
 		Tcl_ResetResult(interp);
 		Tcl_SetObjResult(interp,
 				 Tcl_NewStringObj("cannot use -parent "
@@ -1834,15 +1834,15 @@ ConfigureConnection(
 	    Tcl_ListObjAppendElement(NULL, command, literals[LIT_ID]);
 	    Tcl_ListObjAppendElement(NULL, command, objv[i+1]);
 	    Tcl_IncrRefCount(command);
-	    status = Tcl_EvalObj(interp, command);
+	    status = Tcl_EvalObjEx(interp, command, 0);
 	    if (status == TCL_OK) {
 		status = Tcl_GetIntFromObj(interp, Tcl_GetObjResult(interp),
 					   &w);
 	    }
 	    Tcl_DecrRefCount(command);
 	    if (status != TCL_OK) {
-		Tcl_AddErrorInfo(interp,
-				 "\n    (retrieving ID of parent window)");
+		Tcl_AppendObjToErrorInfo(interp, Tcl_NewStringObj(
+				 "\n    (retrieving ID of parent window)", -1));
 		return status;
 	    }
 	    Tcl_ResetResult(interp);
@@ -2793,12 +2793,12 @@ StatementParamListMethod(
 	for (i = 0; i < nParams; ++i) {
 	    ParamData* pd = sdata->params + i;
 	    Tcl_ListObjAppendElement(NULL, retval, paramNames[i]);
-	    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewIntObj(pd->flags));
-	    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewIntObj(pd->dataType));
+	    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewWideIntObj(pd->flags));
+	    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewWideIntObj(pd->dataType));
 	    Tcl_ListObjAppendElement(NULL, retval,
-				     Tcl_NewIntObj(pd->precision));
-	    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewIntObj(pd->scale));
-	    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewIntObj(pd->nullable));
+				     Tcl_NewWideIntObj(pd->precision));
+	    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewWideIntObj(pd->scale));
+	    Tcl_ListObjAppendElement(NULL, retval, Tcl_NewWideIntObj(pd->nullable));
 	}
     }
     Tcl_SetObjResult(interp, retval);
@@ -3326,8 +3326,8 @@ ForeignkeysStatementConstructor(
 
     have[OPT_FOREIGN] = have[OPT_PRIMARY] = 0;
     for (i = skip+1; i+1 < objc; i+=2) {
-	if (Tcl_GetIndexFromObj(interp, objv[i], options, "option", 0,
-				&paramIdx) != TCL_OK) {
+	if (Tcl_GetIndexFromObjStruct(interp, objv[i], options, sizeof(char *),
+				"option", 0, &paramIdx) != TCL_OK) {
 	    goto freeSData;
 	}
 	if (have[paramIdx]) {
@@ -4330,7 +4330,7 @@ GetCell(
 	    return TCL_ERROR;
 	}
 	if (colLen != SQL_NULL_DATA && colLen != SQL_NO_TOTAL) {
-	    colObj = Tcl_NewLongObj(colLong);
+	    colObj = Tcl_NewWideIntObj(colLong);
 	}
 	break;
 
@@ -4523,7 +4523,7 @@ ResultSetRowcountMethod(
 	Tcl_WrongNumArgs(interp, 2, objv, "");
 	return TCL_ERROR;
     }
-    Tcl_SetObjResult(interp, Tcl_NewLongObj(rdata->rowCount));
+    Tcl_SetObjResult(interp, Tcl_NewWideIntObj(rdata->rowCount));
     return TCL_OK;
 }
 
@@ -5104,7 +5104,7 @@ DatasourceObjCmdW(
 			Tcl_NewStringObj(OdbcErrorCodeNames[j].name, -1));
 		}
 		Tcl_ListObjAppendElement(NULL, errorCodeObj,
-					 Tcl_NewIntObj(errorCode));
+					 Tcl_NewWideIntObj(errorCode));
 
 	    case SQL_NO_DATA:
 	    case SQL_ERROR:
@@ -5294,7 +5294,7 @@ DatasourceObjCmdA(
 			Tcl_NewStringObj(OdbcErrorCodeNames[j].name, -1));
 		}
 		Tcl_ListObjAppendElement(NULL, errorCodeObj,
-					 Tcl_NewIntObj(errorCode));
+					 Tcl_NewWideIntObj(errorCode));
 
 	    case SQL_NO_DATA:
 	    case SQL_ERROR:
@@ -5355,7 +5355,7 @@ Tdbcodbc_Init(
 
     /* Provide the current package */
 
-    if (Tcl_PkgProvide(interp, "tdbc::odbc", PACKAGE_VERSION) == TCL_ERROR) {
+    if (Tcl_PkgProvideEx(interp, "tdbc::odbc", PACKAGE_VERSION, NULL) == TCL_ERROR) {
 	return TCL_ERROR;
     }
 
