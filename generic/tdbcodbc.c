@@ -49,7 +49,7 @@ static Tcl_LoadHandle odbcInstLoadHandle = NULL;
 static SQLHENV hEnv = SQL_NULL_HENV;
 				/* Handle to the global ODBC environment */
 static int hEnvRefCount = 0;	/* Reference count on the global environment */
-static int sizeofSQLWCHAR = sizeof(SQLWCHAR);
+static size_t sizeofSQLWCHAR = sizeof(SQLWCHAR);
 				/* Preset, will be autodetected later */
 
 /*
@@ -293,7 +293,7 @@ typedef struct ResultSetData {
 
 typedef struct OdbcConstant {
     const char* name;		/* Constant name */
-    SQLSMALLINT value;		/* Constant value */
+    int value;		/* Constant value */
 } OdbcConstant;
 
 /*
@@ -1238,7 +1238,7 @@ GetHEnv(
 			'#', '\0', '#', '\0'
 		    };
 
-		    if (infoLen > sizeof(info)) {
+		    if ((size_t)infoLen > sizeof(info)) {
 			infoLen = sizeof(info);
 		    }
 		    for (i = 0; i < infoLen; i++) {
@@ -1387,7 +1387,7 @@ GetResultSetDescription(
     Tcl_HashTable nameHash;	/* Hash table to manage column name
 				 * uniqueness. */
     Tcl_HashEntry* nameEntry;	/* Hash table entry for the current name */
-    int new;			/* Flag that column name is unique */
+    int isNew;			/* Flag that column name is unique */
     int count;			/* Count to append to the name */
     char numbuf[16];		/* Buffer to hold the appended count */
     SQLSMALLINT i;
@@ -1397,7 +1397,7 @@ GetResultSetDescription(
     /* Create a hash table to manage column name uniqueness */
 
     Tcl_InitHashTable(&nameHash, TCL_STRING_KEYS);
-    nameEntry = Tcl_CreateHashEntry(&nameHash, "", &new);
+    nameEntry = Tcl_CreateHashEntry(&nameHash, "", &isNew);
     Tcl_SetHashValue(nameEntry, (ClientData) 0);
 
     /* Count the columns of the result set */
@@ -1472,8 +1472,8 @@ GetResultSetDescription(
 	    for (;;) {
 		nameEntry = Tcl_CreateHashEntry(&nameHash,
 						Tcl_GetString(colNameObj),
-						&new);
-		if (new) {
+						&isNew);
+		if (isNew) {
 		    Tcl_SetHashValue(nameEntry, (ClientData) 1);
 		    break;
 		}
@@ -3885,7 +3885,7 @@ ResultSetConstructor(
 			      paramExternalLen,
 			      rdata->bindStringLengths + nBound);
 	if (!SQL_SUCCEEDED(rc)) {
-	    char* info = ckalloc(80 * strlen(paramName));
+	    char* info = (char *)ckalloc(80 * strlen(paramName));
 	    sprintf(info, "(binding the '%s' parameter)", paramName);
 	    TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt, info);
 	    ckfree(info);
@@ -5092,7 +5092,7 @@ DatasourceObjCmdW(
 	    case SQL_SUCCESS:
 	    case SQL_SUCCESS_WITH_INFO:
 		for (j = 0; OdbcErrorCodeNames[j].name != NULL; ++j) {
-		    if (OdbcErrorCodeNames[j].value == errorCode) {
+		    if (OdbcErrorCodeNames[j].value == (int)errorCode) {
 			break;
 		    }
 		}
@@ -5105,7 +5105,7 @@ DatasourceObjCmdW(
 		}
 		Tcl_ListObjAppendElement(NULL, errorCodeObj,
 					 Tcl_NewWideIntObj(errorCode));
-
+		/* FALLTHRU */
 	    case SQL_NO_DATA:
 	    case SQL_ERROR:
 		finished = 1;
@@ -5282,7 +5282,7 @@ DatasourceObjCmdA(
 	    case SQL_SUCCESS:
 	    case SQL_SUCCESS_WITH_INFO:
 		for (j = 0; OdbcErrorCodeNames[j].name != NULL; ++j) {
-		    if (OdbcErrorCodeNames[j].value == errorCode) {
+		    if (OdbcErrorCodeNames[j].value == (int)errorCode) {
 			break;
 		    }
 		}
@@ -5296,6 +5296,7 @@ DatasourceObjCmdA(
 		Tcl_ListObjAppendElement(NULL, errorCodeObj,
 					 Tcl_NewWideIntObj(errorCode));
 
+		/* FALLTHRU */
 	    case SQL_NO_DATA:
 	    case SQL_ERROR:
 		finished = 1;
@@ -5330,7 +5331,10 @@ DatasourceObjCmdA(
  *-----------------------------------------------------------------------------
  */
 
-extern DLLEXPORT int
+#ifdef __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
+DLLEXPORT int
 Tdbcodbc_Init(
     Tcl_Interp* interp		/* Tcl interpreter */
 ) {
@@ -5602,6 +5606,9 @@ Tdbcodbc_Init(
     DismissHEnv();
     return TCL_OK;
 }
+#ifdef __cplusplus
+}
+#endif  /* __cplusplus */
 
 /*
  *-----------------------------------------------------------------------------

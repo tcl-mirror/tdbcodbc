@@ -95,7 +95,7 @@ TEA_PREFIX
 TEA_SETUP_COMPILER
 
 #-----------------------------------------------------------------------
-# Setup inlining if available. Check sizeof long long. 
+# Setup inlining if available. Check sizeof long long.
 #-----------------------------------------------------------------------
 
 AC_C_INLINE
