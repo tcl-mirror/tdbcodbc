@@ -48,7 +48,7 @@ static Tcl_LoadHandle odbcInstLoadHandle = NULL;
 				/* Handle to the ODBC installer library */
 static SQLHENV hEnv = SQL_NULL_HENV;
 				/* Handle to the global ODBC environment */
-static int hEnvRefCount = 0;	/* Reference count on the global environment */
+static size_t hEnvRefCount = 0;	/* Reference count on the global environment */
 static size_t sizeofSQLWCHAR = sizeof(SQLWCHAR);
 				/* Preset, will be autodetected later */
 
@@ -92,7 +92,7 @@ enum LiteralIndex {
  */
 
 typedef struct PerInterpData {
-    int refCount;		/* Reference count */
+    size_t refCount;		/* Reference count */
     SQLHENV hEnv;		/* ODBC environment handle */
     Tcl_Obj* literals[LIT__END];
 				/* Literal pool */
@@ -122,7 +122,7 @@ typedef struct PerInterpData {
  */
 
 typedef struct ConnectionData {
-    int refCount;		/* Reference count. */
+    size_t refCount;		/* Reference count. */
     PerInterpData* pidata;	/* Per-interpreter data */
     Tcl_Obj* connectionString;	/* Connection string actually used to
 				 * connect to the database */
@@ -168,7 +168,7 @@ typedef struct ConnectionData {
  */
 
 typedef struct StatementData {
-    int refCount;		/* Reference count */
+    size_t refCount;		/* Reference count */
     Tcl_Object connectionObject;
 				/* The connection object */
     ConnectionData* cdata;	/* Data for the connection to which this
@@ -178,10 +178,10 @@ typedef struct StatementData {
 				 * statement */
     SQLHSTMT hStmt;		/* Handle to the ODBC statement */
     SQLWCHAR* nativeSqlW;	/* SQL statement as wide chars */
-    int nativeSqlLen;		/* Length of the statement */
+    size_t nativeSqlLen;		/* Length of the statement */
     SQLWCHAR* nativeMatchPatternW;
 				/* Match pattern for metadata queries */
-    int nativeMatchPatLen;	/* Length of the match pattern */
+    size_t nativeMatchPatLen;	/* Length of the match pattern */
     struct ParamData* params;	/* Pointer to an array of ParamData
 				 * structures that describe the data types
 				 * of substituted parameters. */
@@ -300,7 +300,7 @@ typedef struct OdbcConstant {
  * Constants for the directions of parameter transmission
  */
 
-const static OdbcConstant OdbcParamDirections[] = {
+static const OdbcConstant OdbcParamDirections[] = {
     { "in",		PARAM_KNOWN | PARAM_IN, },
     { "out",		PARAM_KNOWN | PARAM_OUT },
     { "inout",		PARAM_KNOWN | PARAM_IN | PARAM_OUT },
@@ -311,7 +311,7 @@ const static OdbcConstant OdbcParamDirections[] = {
  * ODBC constants for the names of data types
  */
 
-const static OdbcConstant OdbcTypeNames[] = {
+static const OdbcConstant OdbcTypeNames[] = {
     { "bigint",		SQL_BIGINT },
     { "binary",		SQL_BINARY },
     { "bit",		SQL_BIT } ,
@@ -334,7 +334,7 @@ const static OdbcConstant OdbcTypeNames[] = {
     { NULL,		-1 }
 };
 
-const static OdbcConstant OdbcIsolationLevels[] = {
+static const OdbcConstant OdbcIsolationLevels[] = {
     { "readuncommitted",	SQL_TXN_READ_UNCOMMITTED },
     { "readcommitted",		SQL_TXN_READ_COMMITTED },
     { "repeatableread",		SQL_TXN_REPEATABLE_READ },
@@ -342,7 +342,7 @@ const static OdbcConstant OdbcIsolationLevels[] = {
     { NULL,			0 }
 };
 
-const static OdbcConstant OdbcErrorCodeNames[] = {
+static const OdbcConstant OdbcErrorCodeNames[] = {
     { "GENERAL_ERR",			ODBC_ERROR_GENERAL_ERR },
     { "INVALID_BUFF_LEN",		ODBC_ERROR_INVALID_BUFF_LEN },
     { "INVALID_HWND",			ODBC_ERROR_INVALID_HWND },
@@ -369,8 +369,8 @@ const static OdbcConstant OdbcErrorCodeNames[] = {
 
 /* Prototypes for static functions appearing in this file */
 
-static void DStringAppendWChars(Tcl_DString* ds, SQLWCHAR* ws, int len);
-static SQLWCHAR* GetWCharStringFromObj(Tcl_Obj* obj, int* lengthPtr);
+static void DStringAppendWChars(Tcl_DString* ds, SQLWCHAR* ws, size_t len);
+static SQLWCHAR* GetWCharStringFromObj(Tcl_Obj* obj, size_t* lengthPtr);
 
 static void TransferSQLError(Tcl_Interp* interp, SQLSMALLINT handleType,
 			     SQLHANDLE handle, const char* info);
@@ -493,7 +493,7 @@ static int DriversObjCmd(ClientData clientData, Tcl_Interp* interp,
 
 /* Metadata type that holds connection data */
 
-const static Tcl_ObjectMetadataType connectionDataType = {
+static const Tcl_ObjectMetadataType connectionDataType = {
     TCL_OO_METADATA_VERSION_CURRENT,
 				/* version */
     "ConnectionData",		/* name */
@@ -504,7 +504,7 @@ const static Tcl_ObjectMetadataType connectionDataType = {
 
 /* Metadata type that holds statement data */
 
-const static Tcl_ObjectMetadataType statementDataType = {
+static const Tcl_ObjectMetadataType statementDataType = {
     TCL_OO_METADATA_VERSION_CURRENT,
 				/* version */
     "StatementData",		/* name */
@@ -515,7 +515,7 @@ const static Tcl_ObjectMetadataType statementDataType = {
 
 /* Metadata type for result set data */
 
-const static Tcl_ObjectMetadataType resultSetDataType = {
+static const Tcl_ObjectMetadataType resultSetDataType = {
     TCL_OO_METADATA_VERSION_CURRENT,
 				/* version */
     "ResultSetData",		/* name */
@@ -526,7 +526,7 @@ const static Tcl_ObjectMetadataType resultSetDataType = {
 
 /* Method types of the connection methods that are implemented in C */
 
-const static Tcl_MethodType ConnectionConstructorType = {
+static const Tcl_MethodType ConnectionConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -534,7 +534,7 @@ const static Tcl_MethodType ConnectionConstructorType = {
     DeleteCmd,			/* deleteProc */
     CloneCmd			/* cloneProc */
 };
-const static Tcl_MethodType ConnectionBeginTransactionMethodType = {
+static const Tcl_MethodType ConnectionBeginTransactionMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "begintransaction",		/* name */
@@ -543,7 +543,7 @@ const static Tcl_MethodType ConnectionBeginTransactionMethodType = {
     NULL,			/* deleteProc */
     CloneCmd			/* cloneProc */
 };
-const static Tcl_MethodType ConnectionConfigureMethodType = {
+static const Tcl_MethodType ConnectionConfigureMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "configure",		/* name */
@@ -551,7 +551,7 @@ const static Tcl_MethodType ConnectionConfigureMethodType = {
     NULL,			/* deleteProc */
     CloneCmd			/* cloneProc */
 };
-const static Tcl_MethodType ConnectionEndXcnMethodType = {
+static const Tcl_MethodType ConnectionEndXcnMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "endtransaction",		/* name */
@@ -559,7 +559,7 @@ const static Tcl_MethodType ConnectionEndXcnMethodType = {
     NULL,			/* deleteProc */
     CloneCmd			/* cloneProc */
 };
-const static Tcl_MethodType ConnectionHasBigintMethodType = {
+static const Tcl_MethodType ConnectionHasBigintMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "HasBigint",		/* name */
@@ -568,7 +568,7 @@ const static Tcl_MethodType ConnectionHasBigintMethodType = {
     NULL,			/* deleteProc */
     CloneCmd			/* cloneProc */
 };
-const static Tcl_MethodType ConnectionHasWvarcharMethodType = {
+static const Tcl_MethodType ConnectionHasWvarcharMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "HasWvarchar",		/* name */
@@ -583,7 +583,7 @@ const static Tcl_MethodType ConnectionHasWvarcharMethodType = {
  * 'rollback' are all special because they have non-NULL clientData.
  */
 
-const static Tcl_MethodType* ConnectionMethods[] = {
+static const Tcl_MethodType* ConnectionMethods[] = {
     &ConnectionBeginTransactionMethodType,
     &ConnectionConfigureMethodType,
     &ConnectionHasBigintMethodType,
@@ -593,7 +593,7 @@ const static Tcl_MethodType* ConnectionMethods[] = {
 
 /* Method types of the statement methods that are implemented in C */
 
-const static Tcl_MethodType StatementConstructorType = {
+static const Tcl_MethodType StatementConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -601,7 +601,7 @@ const static Tcl_MethodType StatementConstructorType = {
     NULL,			/* deleteProc */
     NULL			/* cloneProc */
 };
-const static Tcl_MethodType StatementConnectionMethodType = {
+static const Tcl_MethodType StatementConnectionMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "connection",		/* name */
@@ -609,7 +609,7 @@ const static Tcl_MethodType StatementConnectionMethodType = {
     NULL,			/* deleteProc */
     NULL			/* cloneProc */
 };
-const static Tcl_MethodType StatementParamListMethodType = {
+static const Tcl_MethodType StatementParamListMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "ParamList",		/* name */
@@ -617,7 +617,7 @@ const static Tcl_MethodType StatementParamListMethodType = {
     NULL,			/* deleteProc */
     NULL			/* cloneProc */
 };
-const static Tcl_MethodType StatementParamtypeMethodType = {
+static const Tcl_MethodType StatementParamtypeMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "paramtype",		/* name */
@@ -630,7 +630,7 @@ const static Tcl_MethodType StatementParamtypeMethodType = {
  * Methods to create on the statement class.
  */
 
-const static Tcl_MethodType* StatementMethods[] = {
+static const Tcl_MethodType* StatementMethods[] = {
     &StatementConnectionMethodType,
     &StatementParamListMethodType,
     &StatementParamtypeMethodType,
@@ -642,7 +642,7 @@ const static Tcl_MethodType* StatementMethods[] = {
  * used to query the names and attributes of database tables.
  */
 
-const static Tcl_MethodType TablesStatementConstructorType = {
+static const Tcl_MethodType TablesStatementConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -656,7 +656,7 @@ const static Tcl_MethodType TablesStatementConstructorType = {
  * used to query the names and attributes of database columns.
  */
 
-const static Tcl_MethodType ColumnsStatementConstructorType = {
+static const Tcl_MethodType ColumnsStatementConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -671,7 +671,7 @@ const static Tcl_MethodType ColumnsStatementConstructorType = {
  * used to query the names and attributes of primary keys.
  */
 
-const static Tcl_MethodType PrimarykeysStatementConstructorType = {
+static const Tcl_MethodType PrimarykeysStatementConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -686,7 +686,7 @@ const static Tcl_MethodType PrimarykeysStatementConstructorType = {
  * used to query the names and attributes of foreign keys.
  */
 
-const static Tcl_MethodType ForeignkeysStatementConstructorType = {
+static const Tcl_MethodType ForeignkeysStatementConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -701,7 +701,7 @@ const static Tcl_MethodType ForeignkeysStatementConstructorType = {
  * used to query the names and attributes of database types.
  */
 
-const static Tcl_MethodType TypesStatementConstructorType = {
+static const Tcl_MethodType TypesStatementConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -712,7 +712,7 @@ const static Tcl_MethodType TypesStatementConstructorType = {
 
 /* Method types of the result set methods that are implemented in C */
 
-const static Tcl_MethodType ResultSetConstructorType = {
+static const Tcl_MethodType ResultSetConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -720,14 +720,14 @@ const static Tcl_MethodType ResultSetConstructorType = {
     NULL,			/* deleteProc */
     NULL			/* cloneProc */
 };
-const static Tcl_MethodType ResultSetColumnsMethodType = {
+static const Tcl_MethodType ResultSetColumnsMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */    "columns",			/* name */
     ResultSetColumnsMethod,	/* callProc */
     NULL,			/* deleteProc */
     NULL			/* cloneProc */
 };
-const static Tcl_MethodType ResultSetNextresultsMethodType = {
+static const Tcl_MethodType ResultSetNextresultsMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "nextresults",		/* name */
@@ -735,7 +735,7 @@ const static Tcl_MethodType ResultSetNextresultsMethodType = {
     NULL,			/* deleteProc */
     NULL			/* cloneProc */
 };
-const static Tcl_MethodType ResultSetNextrowMethodType = {
+static const Tcl_MethodType ResultSetNextrowMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "nextrow",			/* name */
@@ -743,7 +743,7 @@ const static Tcl_MethodType ResultSetNextrowMethodType = {
     NULL,			/* deleteProc */
     NULL			/* cloneProc */
 };
-const static Tcl_MethodType ResultSetRowcountMethodType = {
+static const Tcl_MethodType ResultSetRowcountMethodType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "rowcount",			/* name */
@@ -753,7 +753,7 @@ const static Tcl_MethodType ResultSetRowcountMethodType = {
 };
 
 
-const static Tcl_MethodType* ResultSetMethods[] = {
+static const Tcl_MethodType* ResultSetMethods[] = {
     &ResultSetColumnsMethodType,
     &ResultSetNextresultsMethodType,
     &ResultSetRowcountMethodType,
@@ -782,9 +782,9 @@ static void
 DStringAppendWChars(
     Tcl_DString* ds,		/* Output string */
     SQLWCHAR* ws,		/* Input string */
-    int len			/* Length of the input string in characters */
+    size_t len			/* Length of the input string in characters */
 ) {
-    int i;
+    size_t i;
     char buf[4] = "";
 
     if (sizeofSQLWCHAR == sizeof(unsigned short)) {
@@ -792,7 +792,7 @@ DStringAppendWChars(
 
 	for (i = 0; i < len; ++i) {
 	    unsigned int ch;
-	    int bytes;
+	    size_t bytes;
 
 	    ch = ptr16[i];
 	    bytes = Tcl_UniCharToUtf(ch, buf);
@@ -803,7 +803,7 @@ DStringAppendWChars(
 
 	for (i = 0; i < len; ++i) {
 	    unsigned int ch;
-	    int bytes;
+	    size_t bytes;
 
 	    ch = ptr32[i];
 	    if (ch > 0x10ffff) {
@@ -836,11 +836,11 @@ DStringAppendWChars(
 static SQLWCHAR*
 GetWCharStringFromObj(
     Tcl_Obj* obj,		/* Tcl object whose string rep is desired */
-    int* lengthPtr		/* Length of the string */
+    size_t* lengthPtr		/* Length of the string */
 ) {
-    int len;			/* Length of the input string in bytes */
-    char* bytes = Tcl_GetStringFromObj(obj, &len);
+    char* bytes = Tcl_GetString(obj);
 				/* UTF-8 representation of the input string */
+    size_t len = obj->length;	/* Length of the input string in bytes */
     char* end = bytes + len;	/* End of UTF-8 representation */
     SQLWCHAR* retval;		/* Buffer to hold the converted string */
     SQLWCHAR* wcPtr;
@@ -866,12 +866,10 @@ GetWCharStringFromObj(
 		ch = *bytes++ & 0x00ff;
 	    }
 	    uch = ch;
-#if TCL_UTF_MAX > 4
-	    if (uch > 0xffff) {
+	    if ((sizeof(Tcl_UniChar) > 2) && (uch > 0xffff)) {
 		*ptr16++ = (((uch - 0x10000) >> 10) & 0x3ff) | 0xd800;
 		uch = ((uch - 0x10000) & 0x3ff) | 0xdc00;
 	    }
-#endif
 	    if (uch > 0x7f) {
 		shrink = 1;
 	    }
@@ -892,8 +890,7 @@ GetWCharStringFromObj(
 		ch = *bytes++ & 0x00ff;
 	    }
 	    uch = ch;
-#if TCL_UTF_MAX <= 4
-	    if ((uch & 0xfc00) == 0xd800) {
+	    if ((sizeof(Tcl_UniChar) == 2) && ((uch & 0xfc00) == 0xd800)) {
 		if (Tcl_UtfCharComplete(bytes, end - bytes)) {
 		    len = Tcl_UtfToUniChar(bytes, &ch);
 		    if ((ch & 0xfc00) == 0xdc00) {
@@ -902,7 +899,6 @@ GetWCharStringFromObj(
 		    }
 		}
 	    }
-#endif
 	    if (uch > 0x7f) {
 		shrink = 1;
 	    }
@@ -1287,7 +1283,7 @@ static void
 DismissHEnv(void)
 {
     Tcl_MutexLock(&hEnvMutex);
-    if (--hEnvRefCount == 0) {
+    if (hEnvRefCount-- <= 1) {
 	SQLFreeHandle(SQL_HANDLE_ENV, hEnv);
 	hEnv = SQL_NULL_HANDLE;
 	if (odbcInstLoadHandle != NULL) {
@@ -1560,7 +1556,7 @@ ConfigureConnection(
 
     /* Configuration options */
 
-    const static char* options[] = {
+    static const char* options[] = {
 	"-encoding",
 	"-isolation",
 	"-parent",
@@ -1936,7 +1932,7 @@ ConnectionConstructor(
     HWND hParentWindow = NULL;	/* Windows handle of the main window */
     SQLWCHAR* connectionStringReq;
 				/* Connection string requested by the caller */
-    int connectionStringReqLen;
+    size_t connectionStringReqLen;
 				/* Length of the requested connection string */
     SQLWCHAR connectionString[1025*2];
 				/* Connection string actually used */
@@ -2541,7 +2537,7 @@ StatementConstructor(
     Tcl_Obj** tokenv;		/* Exploded tokens from the list */
     Tcl_Obj* nativeSql;		/* SQL statement mapped to ODBC form */
     char* tokenStr;		/* Token string */
-    int tokenLen;		/* Length of a token */
+    size_t tokenLen;		/* Length of a token */
     RETCODE rc;			/* Return code from ODBC */
     SQLSMALLINT nParams;	/* Number of parameters in the ODBC statement */
     int i, j;
@@ -2591,7 +2587,8 @@ StatementConstructor(
     nativeSql = Tcl_NewObj();
     Tcl_IncrRefCount(nativeSql);
     for (i = 0; i < tokenc; ++i) {
-	tokenStr = Tcl_GetStringFromObj(tokenv[i], &tokenLen);
+	tokenStr = Tcl_GetString(tokenv[i]);
+	tokenLen = tokenv[i]->length;
 
 	switch (tokenStr[0]) {
 	case '$':
@@ -3276,7 +3273,7 @@ ForeignkeysStatementConstructor(
     StatementData* sdata;	/* The statement's object data */
     RETCODE rc;			/* Return code from ODBC */
 
-    const static char* options[] = {	/* Option table */
+    static const char* options[] = {	/* Option table */
 	"-foreign",
 	"-primary",
 	NULL
@@ -3602,7 +3599,7 @@ ResultSetConstructor(
     const char* paramName;	/* Name of a substituted parameter */
     Tcl_Obj* paramValObj;	/* Value of a substituted parameter */
     const char* paramVal;	/* Value of a substituted parameter */
-    int paramLen;		/* String length of the parameter value */
+    size_t paramLen;		/* String length of the parameter value */
     Tcl_DString paramExternal;	/* Substituted parameter, converted to
 				 * system encoding */
     int paramExternalLen;	/* Length of the substituted parameter
@@ -3849,7 +3846,8 @@ ResultSetConstructor(
 		     * encoding and store in rdata->bindStrings[nBound].
 		     */
 		    dataType = SQL_C_CHAR;
-		    paramVal = Tcl_GetStringFromObj(paramValObj, &paramLen);
+		    paramVal = Tcl_GetString(paramValObj);
+		    paramLen = paramValObj->length;
 		    Tcl_DStringInit(&paramExternal);
 		    Tcl_UtfToExternalDString(NULL, paramVal, paramLen,
 					     &paramExternal);
@@ -4669,7 +4667,7 @@ DatasourcesObjCmd(
     PerInterpData* pidata = (PerInterpData*) clientData;
     SQLSMALLINT initDirection = SQL_FETCH_FIRST;
     SQLSMALLINT direction;
-    const static struct flag {
+    static const struct flag {
 	const char* name;
 	SQLSMALLINT value;
     } flags[] = {
@@ -4978,7 +4976,7 @@ DatasourceObjCmdW(
     int objc,			/* Parameter count */
     Tcl_Obj *const objv[]	/* Parameter vector */
 ) {
-    const static struct flag {
+    static const struct flag {
 	const char* name;
 	WORD value;
     } flags[] = {
@@ -4996,9 +4994,9 @@ DatasourceObjCmdW(
     WCHAR* attributes;		/* NULL-delimited attribute values */
     char errorMessage[SQL_MAX_MESSAGE_LENGTH+1];
 				/* Error message from ODBC operations */
-    int driverNameLen;		/* Length of the driver name */
+    size_t driverNameLen;		/* Length of the driver name */
     Tcl_Obj* attrObj;		/* NULL-delimited attribute values */
-    int attrLen;		/* Length of the attribute values */
+    size_t attrLen;		/* Length of the attribute values */
     const char* sep;		/* Separator for attribute values */
     DWORD errorCode;		/* Error code */
     WORD errorMessageLen;	/* Length of the returned error message */
@@ -5157,7 +5155,7 @@ DatasourceObjCmdA(
     int objc,			/* Parameter count */
     Tcl_Obj *const objv[]	/* Parameter vector */
 ) {
-    const static struct flag {
+    static const struct flag {
 	const char* name;
 	WORD value;
     } flags[] = {
@@ -5180,9 +5178,9 @@ DatasourceObjCmdA(
 				/* Error message from ODBC operations */
     Tcl_DString errorMessageDS;	/* Error message in UTF-8 */
     char* p;
-    int driverNameLen;		/* Length of the driver name */
+    size_t driverNameLen;		/* Length of the driver name */
     Tcl_Obj* attrObj;		/* NULL-delimited attribute values */
-    int attrLen;		/* Length of the attribute values */
+    size_t attrLen;		/* Length of the attribute values */
     const char* sep;		/* Separator for attribute values */
     DWORD errorCode;		/* Error code */
     WORD errorMessageLen;	/* Length of the returned error message */
@@ -5209,7 +5207,8 @@ DatasourceObjCmdA(
     /* Convert driver name to the appropriate encoding */
 
     Tcl_DStringInit(&driverNameDS);
-    p = Tcl_GetStringFromObj(objv[2], &driverNameLen);
+    p = Tcl_GetString(objv[2]);
+    driverNameLen = objv[2]->length;
     Tcl_UtfToExternalDString(NULL, p, driverNameLen, &driverNameDS);
     driverName = Tcl_DStringValue(&driverNameDS);
     driverNameLen = Tcl_DStringLength(&driverNameDS);
@@ -5229,7 +5228,8 @@ DatasourceObjCmdA(
     }
     Tcl_AppendToObj(attrObj, "\xc0\x80", 2);
     Tcl_DStringInit(&attributesDS);
-    p = Tcl_GetStringFromObj(attrObj, &attrLen);
+    p = Tcl_GetString(attrObj);
+    attrLen = attrObj->length;
     Tcl_UtfToExternalDString(NULL, p, attrLen, &attributesDS);
     attributes = Tcl_DStringValue(&attributesDS);
     attrLen = Tcl_DStringLength(&attributesDS);
