@@ -2041,7 +2041,7 @@ ConnectionConstructor(
 
 static int
 ConnectionBeginTransactionMethod(
-    ClientData clientData,	/* Unused */
+    ClientData dummy,	/* Unused */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext objectContext, /* Object context */
     int objc,			/* Parameter count */
@@ -2051,6 +2051,7 @@ ConnectionBeginTransactionMethod(
 				/* The current connection object */
     ConnectionData* cdata = (ConnectionData*)
 	Tcl_ObjectGetMetadata(thisObject, &connectionDataType);
+    (void)dummy;
 
     /* Check parameters */
 
@@ -2108,7 +2109,7 @@ ConnectionBeginTransactionMethod(
 
 static int
 ConnectionConfigureMethod(
-    ClientData clientData,	/* Completion type */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext objectContext, /* Object context */
     int objc,			/* Parameter count */
@@ -2119,6 +2120,7 @@ ConnectionConfigureMethod(
     ConnectionData* cdata = (ConnectionData*)
 	Tcl_ObjectGetMetadata(thisObject, &connectionDataType);
 				/* Instance data */
+    (void)dummy;
 
     /* Check parameters */
 
@@ -2221,7 +2223,7 @@ ConnectionEndXcnMethod(
 
 static int
 ConnectionHasBigintMethod(
-    ClientData clientData,	/* Completion type */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext objectContext, /* Object context */
     int objc,			/* Parameter count */
@@ -2233,6 +2235,7 @@ ConnectionHasBigintMethod(
 	Tcl_ObjectGetMetadata(thisObject, &connectionDataType);
 				/* Instance data */
     int flag;
+    (void)dummy;
 
     /* Check parameters */
 
@@ -2273,7 +2276,7 @@ ConnectionHasBigintMethod(
 
 static int
 ConnectionHasWvarcharMethod(
-    ClientData clientData,	/* Completion type */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext objectContext, /* Object context */
     int objc,			/* Parameter count */
@@ -2285,6 +2288,7 @@ ConnectionHasWvarcharMethod(
 	Tcl_ObjectGetMetadata(thisObject, &connectionDataType);
 				/* Instance data */
     int flag;
+    (void)dummy;
 
     /* Check parameters */
 
@@ -2376,10 +2380,13 @@ DeleteCmd (
 
 static int
 CloneCmd(
-    Tcl_Interp* interp,		/* Tcl interpreter */
+    Tcl_Interp* dummy,		/* Tcl interpreter */
     ClientData oldClientData,	/* Environment handle to be discarded */
     ClientData* newClientData	/* New environment handle to be used */
 ) {
+    (void)dummy;
+    (void)oldClientData;
+
     *newClientData = GetHEnv(NULL);
     return TCL_OK;
 }
@@ -2451,6 +2458,9 @@ CloneConnection(
     ClientData metadata,	/* Metadata to be cloned */
     ClientData* newMetaData	/* Where to put the cloned metadata */
 ) {
+    (void)metadata;
+    (void)newMetaData;
+
     Tcl_SetObjResult(interp,
 		     Tcl_NewStringObj("ODBC connections are not clonable", -1));
     return TCL_ERROR;
@@ -2517,13 +2527,12 @@ NewStatement(
 
 static int
 StatementConstructor(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
     Tcl_Obj *const objv[]	/* Parameter vector */
 ) {
-
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current statement object */
     int skip = Tcl_ObjectContextSkippedArgs(context);
@@ -2541,6 +2550,7 @@ StatementConstructor(
     RETCODE rc;			/* Return code from ODBC */
     SQLSMALLINT nParams;	/* Number of parameters in the ODBC statement */
     int i, j;
+    (void)dummy;
 
     /* Find the connection object, and get its data. */
 
@@ -2723,7 +2733,7 @@ StatementConstructor(
 
 static int
 StatementConnectionMethod(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -2738,6 +2748,9 @@ StatementConnectionMethod(
 				/* The command representing the object */
     Tcl_Obj* retval = Tcl_NewObj();
 				/* The command name */
+    (void)dummy;
+    (void)objc;
+    (void)objv;
 
     sdata = (StatementData*) Tcl_ObjectGetMetadata(thisObject,
 						   &statementDataType);
@@ -2767,7 +2780,7 @@ StatementConnectionMethod(
 
 static int
 StatementParamListMethod(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -2780,6 +2793,9 @@ StatementParamListMethod(
     int nParams;		/* Parameter count for the current statement */
     int i;			/* Current parameter index */
     Tcl_Obj* retval;		/* Return value from this command */
+    (void)dummy;
+    (void)objc;
+    (void)objv;
 
     sdata = (StatementData*) Tcl_ObjectGetMetadata(thisObject,
 						   &statementDataType);
@@ -2823,7 +2839,7 @@ StatementParamListMethod(
 
 static int
 StatementParamtypeMethod(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -2847,6 +2863,8 @@ StatementParamtypeMethod(
 				/* ODBC type of the parameter */
     int precision = 0;		/* Length of the parameter */
     int scale = 0;		/* Precision of the parameter */
+    (void)dummy;
+
     sdata = (StatementData*) Tcl_ObjectGetMetadata(thisObject,
 						   &statementDataType);
     /* Check parameters */
@@ -2951,7 +2969,7 @@ StatementParamtypeMethod(
 
 static int
 TablesStatementConstructor(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -2967,6 +2985,7 @@ TablesStatementConstructor(
     ConnectionData* cdata;	/* The connection object's data */
     StatementData* sdata;	/* The statement's object data */
     RETCODE rc;			/* Return code from ODBC */
+    (void)dummy;
 
     /* Find the connection object, and get its data. */
 
@@ -3051,7 +3070,7 @@ TablesStatementConstructor(
 
 static int
 ColumnsStatementConstructor(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -3067,6 +3086,7 @@ ColumnsStatementConstructor(
     ConnectionData* cdata;	/* The connection object's data */
     StatementData* sdata;	/* The statement's object data */
     RETCODE rc;			/* Return code from ODBC */
+    (void)dummy;
 
 
     /* Check param count */
@@ -3154,7 +3174,7 @@ ColumnsStatementConstructor(
 
 static int
 PrimarykeysStatementConstructor(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -3170,6 +3190,7 @@ PrimarykeysStatementConstructor(
     ConnectionData* cdata;	/* The connection object's data */
     StatementData* sdata;	/* The statement's object data */
     RETCODE rc;			/* Return code from ODBC */
+    (void)dummy;
 
 
     /* Check param count */
@@ -3256,7 +3277,7 @@ PrimarykeysStatementConstructor(
 
 static int
 ForeignkeysStatementConstructor(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -3272,6 +3293,7 @@ ForeignkeysStatementConstructor(
     ConnectionData* cdata;	/* The connection object's data */
     StatementData* sdata;	/* The statement's object data */
     RETCODE rc;			/* Return code from ODBC */
+    (void)dummy;
 
     static const char* options[] = {	/* Option table */
 	"-foreign",
@@ -3398,7 +3420,7 @@ ForeignkeysStatementConstructor(
 
 static int
 TypesStatementConstructor(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -3415,6 +3437,7 @@ TypesStatementConstructor(
     StatementData* sdata;	/* The statement's object data */
     RETCODE rc;			/* Return code from ODBC */
     int typeNum;		/* Data type number */
+    (void)dummy;
 
     /* Parse args */
 
@@ -3544,6 +3567,9 @@ CloneStatement(
     ClientData metadata,	/* Metadata to be cloned */
     ClientData* newMetaData	/* Where to put the cloned metadata */
 ) {
+    (void)metadata;
+    (void)newMetaData;
+
     Tcl_SetObjResult(interp,
 		     Tcl_NewStringObj("ODBC statements are not clonable", -1));
     return TCL_ERROR;
@@ -3574,7 +3600,7 @@ CloneStatement(
 
 static int
 ResultSetConstructor(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -3608,6 +3634,7 @@ ResultSetConstructor(
     unsigned char* byteArrayPtr; /* Pointer to a BINARY or VARBINARY
 				 * parameter, expressed as a byte array.*/
     int i;
+    (void)dummy;
 
     /* Check parameter count */
 
@@ -3963,17 +3990,17 @@ ResultSetConstructor(
 
 static int
 ResultSetColumnsMethod(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
     Tcl_Obj *const objv[]	/* Parameter vector */
 ) {
-
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current result set object */
     ResultSetData* rdata = (ResultSetData*)
 	Tcl_ObjectGetMetadata(thisObject, &resultSetDataType);
+    (void)dummy;
 
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 2, objv, "");
@@ -4017,7 +4044,7 @@ ResultSetColumnsMethod(
 
 static int
 ResultSetNextresultsMethod(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
@@ -4037,6 +4064,9 @@ ResultSetNextresultsMethod(
     Tcl_Obj** literals = pidata->literals;
 				/* Literal pool */
     SQLRETURN rc;		/* Return code from ODBC operations */
+    (void)dummy;
+    (void)objc;
+    (void)objv;
 
     /*
      * Once we are advancing the results, any data that we think we know
@@ -4504,18 +4534,18 @@ GetCell(
 
 static int
 ResultSetRowcountMethod(
-    ClientData clientData,	/* Not used */
+    ClientData dummy,	/* Not used */
     Tcl_Interp* interp,		/* Tcl interpreter */
     Tcl_ObjectContext context,	/* Object context  */
     int objc, 			/* Parameter count */
     Tcl_Obj *const objv[]	/* Parameter vector */
 ) {
-
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current result set object */
     ResultSetData* rdata = (ResultSetData*)
 	Tcl_ObjectGetMetadata(thisObject, &resultSetDataType);
 				/* Data pertaining to the current result set */
+    (void)dummy;
 
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 2, objv, "");
@@ -4600,6 +4630,9 @@ CloneResultSet(
     ClientData metadata,	/* Metadata to be cloned */
     ClientData* newMetaData	/* Where to put the cloned metadata */
 ) {
+    (void)metadata;
+    (void)newMetaData;
+
     Tcl_SetObjResult(interp,
 		     Tcl_NewStringObj("ODBC result sets are not clonable", -1));
     return TCL_ERROR;
@@ -4971,7 +5004,7 @@ DriversObjCmd(
 
 static int
 DatasourceObjCmdW(
-    ClientData clientData,	/* Unused */
+    ClientData dummy,	/* Unused */
     Tcl_Interp* interp,		/* Tcl interpreter */
     int objc,			/* Parameter count */
     Tcl_Obj *const objv[]	/* Parameter vector */
@@ -4989,7 +5022,6 @@ DatasourceObjCmdW(
 	{ NULL,			0 }
     };
     int flagIndex;		/* Index of the subcommand */
-
     WCHAR* driverName;		/* Name of the ODBC driver */
     WCHAR* attributes;		/* NULL-delimited attribute values */
     char errorMessage[SQL_MAX_MESSAGE_LENGTH+1];
@@ -5009,6 +5041,7 @@ DatasourceObjCmdW(
     BOOL ok;
     int status = TCL_OK;
     int finished = 0;
+    (void)dummy;
 
     /* Check args */
 
@@ -5150,7 +5183,7 @@ DatasourceObjCmdW(
 
 static int
 DatasourceObjCmdA(
-    ClientData clientData,	/* Unused */
+    ClientData dummy,	/* Unused */
     Tcl_Interp* interp,		/* Tcl interpreter */
     int objc,			/* Parameter count */
     Tcl_Obj *const objv[]	/* Parameter vector */
@@ -5191,6 +5224,7 @@ DatasourceObjCmdA(
     BOOL ok;
     int status = TCL_OK;
     int finished = 0;
+    (void)dummy;
 
     /* Check args */
 
