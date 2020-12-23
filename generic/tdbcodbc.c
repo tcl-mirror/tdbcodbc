@@ -3293,8 +3293,6 @@ ForeignkeysStatementConstructor(
     ConnectionData* cdata;	/* The connection object's data */
     StatementData* sdata;	/* The statement's object data */
     RETCODE rc;			/* Return code from ODBC */
-    (void)dummy;
-
     static const char* options[] = {	/* Option table */
 	"-foreign",
 	"-primary",
@@ -3313,6 +3311,7 @@ ForeignkeysStatementConstructor(
 				/* Flags for whether given -keywords have been
 				 * seen. */
     Tcl_Obj* resultObj;		/* Interpreter result */
+    (void)dummy;
 
     /* Check param count */
 
