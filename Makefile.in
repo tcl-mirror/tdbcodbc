@@ -168,7 +168,7 @@ PKG_CFLAGS	= @PKG_CFLAGS@
 DEFS		= @DEFS@ $(PKG_CFLAGS) -DTCL_NO_DEPRECATED=1
 
 # Move pkgIndex.tcl to 'BINARIES' var if it is generated in the Makefile
-CONFIG_CLEAN_FILES = Makefile pkgIndex.tcl tdbcConfig.sh
+CONFIG_CLEAN_FILES = Makefile pkgIndex.tcl
 CLEANFILES	= @CLEANFILES@
 
 CPPFLAGS	= @CPPFLAGS@
@@ -257,21 +257,21 @@ test-jet: binaries libraries
 	TDBCODBC_TEST_TYPE=jet \
 		$(TCLSH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) \
 		-load "package ifneeded tdbc::odbc $(PACKAGE_VERSION) \
-			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` $(PACKAGE_NAME)]"
+			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` [string totitle $(PACKAGE_NAME)]]"
 
 test-sqlserver: binaries libraries
 	@echo testing tdbcodbc against SQL Server
 	TDBCODBC_TEST_TYPE=sqlserver \
 		$(TCLSH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) \
 		-load "package ifneeded tdbc::odbc ${PACKAGE_VERSION} \
-			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` $(PACKAGE_NAME)]"
+			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` [string totitle $(PACKAGE_NAME)]]"
 
 test-sqlite: binaries libraries
 	@echo testing tdbcodbc against SQLite
 	TDBCODBC_TEST_TYPE=sqlite \
 		$(TCLSH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) \
 		-load "package ifneeded tdbc::odbc ${PACKAGE_VERSION} \
-			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` $(PACKAGE_NAME)]"
+			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` [string totitle $(PACKAGE_NAME)]]"
 
 valgrind-sqlite: binaries libraries
 	TDBCODBC_TEST_TYPE=sqlite \
@@ -280,7 +280,7 @@ valgrind-sqlite: binaries libraries
 	$(VALGRIND) $(VALGRINDARGS) \
 	$(TCLSH_PROG) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) \
 		-load "package ifneeded tdbc::odbc ${PACKAGE_VERSION} \
-			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` $(PACKAGE_NAME)]"
+			[list source `@CYGPATH@ $(srcdir)/library/tdbcodbc.tcl`]\;[list load `@CYGPATH@ $(PKG_LIB_FILE)` [string totitle $(PACKAGE_NAME)]]"
 
 shell: binaries libraries
 	@$(TCLSH) $(SCRIPT)

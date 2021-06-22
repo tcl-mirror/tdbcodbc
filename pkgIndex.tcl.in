@@ -1,6 +1,6 @@
 # Index file to load the TDBC ODBC package.
 
-if {![package vsatisfies [package provide Tcl] 8.6-]}
+if {![package vsatisfies [package provide Tcl] 8.6-]} {
     return
 }
 if {[package vsatisfies [package provide Tcl] 9.0-]} {
