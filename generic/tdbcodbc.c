@@ -5369,8 +5369,8 @@ extern "C" {
 #endif  /* __cplusplus */
 DLLEXPORT int
 Tdbcodbc_Init(
-    Tcl_Interp* interp		/* Tcl interpreter */
-) {
+    Tcl_Interp* interp		/* Tcl interpreter */)
+{
     SQLHENV hEnv;		/* ODBC environemnt */
     PerInterpData* pidata;	/* Per-interpreter data for this package */
     Tcl_Obj* nameObj;		/* Name of a class or method being looked up */
@@ -5450,7 +5450,7 @@ Tdbcodbc_Init(
 
     /* Provide the current package */
 
-    if (Tcl_PkgProvideEx(interp, "tdbc::odbc", PACKAGE_VERSION, NULL) == TCL_ERROR) {
+    if (Tcl_PkgProvideEx(interp, "tdbc::odbc", PACKAGE_VERSION, NULL) != TCL_OK) {
 	return TCL_ERROR;
     }
 
