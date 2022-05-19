@@ -173,7 +173,7 @@ typedef struct StatementData {
 				/* The connection object */
     ConnectionData* cdata;	/* Data for the connection to which this
 				 * statement pertains. */
-    Tcl_Obj* subVars;	        /* List of variables to be substituted, in the
+    Tcl_Obj* subVars;		/* List of variables to be substituted, in the
 				 * order in which they appear in the
 				 * statement */
     SQLHSTMT hStmt;		/* Handle to the ODBC statement */
@@ -1050,9 +1050,16 @@ SQLStateIs(
     SQLSMALLINT stateLen;	/* String length of the state code */
     SQLSMALLINT i;		/* Loop index */
     SQLRETURN rc;		/* SQL result */
+    SQLINTEGER nRecs;		/* Number of diag records */
 
+    nRecs = -1;
+    SQLGetDiagFieldA(handleType, handle, 0, SQL_DIAG_NUMBER,
+	    (SQLPOINTER) &nRecs, 0, NULL);
+    if (nRecs < 0) {
+	nRecs = 1;
+    }
     i = 1;
-    while (1) {
+    while (i <= nRecs) {
 	state[0] = 0;
 	stateLen = 0,
 	rc = SQLGetDiagFieldA(handleType, handle, i, SQL_DIAG_SQLSTATE,
@@ -1063,6 +1070,7 @@ SQLStateIs(
 	if (stateLen >= 0 && !strcmp(sqlstate, (const char*) state)) {
 	    return 1;
 	}
+	i++;
     }
     return 0;
 }
@@ -2674,7 +2682,7 @@ StatementConstructor(
 	    if (SQL_SUCCEEDED(rc)) {
 		/*
 		 * FIXME: SQLDescribeParam doesn't actually describe
-		 *        the direction of parameter transmission for
+		 *	  the direction of parameter transmission for
 		 *	  stored procedure calls.  It appears simply
 		 *	  to be the caller's responsibility to know
 		 *	  these things.  If anyone has an idea how to
