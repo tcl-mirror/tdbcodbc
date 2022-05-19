@@ -2218,13 +2218,14 @@ ConnectionEndXcnMethod(
  *	64-bit ints.
  *
  * Usage:
- *	$connection HasBigint boolean
+ *	$connection HasBigint ?boolean?
  *
  * Parameters:
- *	boolean - 1 if the connection supports BIGINT, 0 otherwise
+ *	boolean - 1 if the connection supports BIGINT, 0 otherwise,
+ *		  if omitted, return current state
  *
  * Results:
- *	Returns an empty Tcl result.
+ *	Returns an empty Tcl result or boolean current state.
  *
  *-----------------------------------------------------------------------------
  */
@@ -2247,8 +2248,13 @@ ConnectionHasBigintMethod(
 
     /* Check parameters */
 
+    if (objc == 2) {
+	Tcl_SetObjResult(interp, Tcl_NewWideIntObj(
+		(cdata->flags & CONNECTION_FLAG_HAS_BIGINT) ? 1 : 0));
+	return TCL_OK;
+    }
     if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "flag");
+	Tcl_WrongNumArgs(interp, 2, objv, "?flag?");
 	return TCL_ERROR;
     }
     if (Tcl_GetBooleanFromObj(interp, objv[2], &flag) != TCL_OK) {
@@ -2271,13 +2277,14 @@ ConnectionHasBigintMethod(
  *	WVARCHAR strings.
  *
  * Usage:
- *	$connection HasWvarchar boolean
+ *	$connection HasWvarchar ?boolean?
  *
  * Parameters:
  *	boolean - 1 if the connection supports WVARCHAR, 0 otherwise
+ *		  if omitted, return current state
  *
  * Results:
- *	Returns an empty Tcl result.
+ *	Returns an empty Tcl result or boolean current state.
  *
  *-----------------------------------------------------------------------------
  */
@@ -2300,8 +2307,13 @@ ConnectionHasWvarcharMethod(
 
     /* Check parameters */
 
+    if (objc == 2) {
+	Tcl_SetObjResult(interp, Tcl_NewWideIntObj(
+		(cdata->flags & CONNECTION_FLAG_HAS_WVARCHAR) ? 1 : 0));
+	return TCL_OK;
+    }
     if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "flag");
+	Tcl_WrongNumArgs(interp, 2, objv, "?flag?");
 	return TCL_ERROR;
     }
     if (Tcl_GetBooleanFromObj(interp, objv[2], &flag) != TCL_OK) {
