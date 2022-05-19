@@ -2249,8 +2249,8 @@ ConnectionHasBigintMethod(
     /* Check parameters */
 
     if (objc == 2) {
-	Tcl_SetObjResult(interp, Tcl_NewWideIntObj(
-		(cdata->flags & CONNECTION_FLAG_HAS_BIGINT) ? 1 : 0));
+	Tcl_SetObjResult(interp, Tcl_NewBooleanObj(
+		cdata->flags & CONNECTION_FLAG_HAS_BIGINT));
 	return TCL_OK;
     }
     if (objc != 3) {
@@ -2308,8 +2308,8 @@ ConnectionHasWvarcharMethod(
     /* Check parameters */
 
     if (objc == 2) {
-	Tcl_SetObjResult(interp, Tcl_NewWideIntObj(
-		(cdata->flags & CONNECTION_FLAG_HAS_WVARCHAR) ? 1 : 0));
+	Tcl_SetObjResult(interp, Tcl_NewBooleanObj(
+		cdata->flags & CONNECTION_FLAG_HAS_WVARCHAR));
 	return TCL_OK;
     }
     if (objc != 3) {
