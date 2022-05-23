@@ -3,9 +3,9 @@
 # Makefile for TBDC ODBC interface
 #
 # Basic build, test and install
-#   nmake /s /f makefile.vc INSTALLDIR=c:\path\to\installdir
-#   nmake /s /f makefile.vc INSTALLDIR=c:\path\to\installdir install
-#   nmake /s /f makefile.vc INSTALLDIR=c:\path\to\installdir test
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\installdir
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\installdir test
+#   nmake /f makefile.vc INSTALLDIR=c:\path\to\installdir install
 #
 # For other build options (debug, static etc.),
 # See TIP 477 (https://core.tcl-lang.org/tips/doc/main/tip/477.md) for
@@ -21,6 +21,7 @@ PROJECT = tdbcodbc
 # without -DUNICODE. Keep that behaviour for now.
 USE_WIDECHAR_API  = 0
 
+PRJ_DEFINES	= $(PRJ_DEFINES) -Dinline=__inline
 PRJ_DEFINES = $(PRJ_DEFINES) -DTCL_NO_DEPRECATED=1
 PRJ_DEFINES = $(PRJ_DEFINES) -I$(TMP_DIR)
 
@@ -73,7 +74,6 @@ TDBC_LIB_FILE	 = tdbc$(TDBC_VERSION).dll
 TDBC_BIN_DIR     = $(TDBC_DIR)/win/$(BUILDDIRTOP)
 
 PRJ_INCLUDES	= -I"$(TDBC_GENERIC_DIR)"
-PRJ_DEFINES	= -Dinline=__inline
 
 !if !$(STATIC_BUILD)
 PRJ_LIBS  = $(TDBCSTUBLIB)
@@ -98,6 +98,13 @@ $(OUT_DIR)\pkgIndex.tcl: $(ROOT)\pkgIndex.tcl.in
 @PKG_LIB_FILE8@       $(PRJLIBNAME8)
 @PKG_LIB_FILE9@       $(PRJLIBNAME9)
 <<
+
+$(ROOT)\manifest.uuid:
+   copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
+   git rev-parse HEAD >>$(ROOT)\manifest.uuid
+
+$(TMP_DIR)\tdbcOdbcUuid.h:	$(ROOT)\manifest.uuid
+	copy $(WIN_DIR)\tdbcOdbcUuid.h.in+$(ROOT)\manifest.uuid $(TMP_DIR)\tdbcOdbcUuid.h
 
 test: test-jet test-sqlserver test-sqlite
 
@@ -162,3 +169,7 @@ test-sqlite: setup $(PROJECT)
 		package ifneeded tdbc $(TDBC_DOTVERSION) \
 			{source {$(TDBC_BIN_DIR:\=/)/tdbc.tcl};load {$(TDBC_BIN_DIR:\=/)/$(TDBC_LIB_FILE)} tdbc}"
 !endif
+
+
+# Explicit dependency rules
+$(GENERICDIR)\tdbcodbc.c : $(TMP_DIR)\tdbcOdbcUuid.h
