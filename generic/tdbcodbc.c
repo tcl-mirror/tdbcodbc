@@ -3895,7 +3895,7 @@ ResultSetConstructor(
 		    paramVal = Tcl_GetString(paramValObj);
 		    paramLen = paramValObj->length;
 		    Tcl_DStringInit(&paramExternal);
-		    Tcl_UtfToExternalDString(NULL, paramVal, paramLen,
+		    (void)Tcl_UtfToExternalDString(NULL, paramVal, paramLen,
 					     &paramExternal);
 		    paramExternalLen = Tcl_DStringLength(&paramExternal);
 		    rdata->bindStrings[nBound] = (SQLCHAR*)
@@ -4511,7 +4511,7 @@ GetCell(
 					     (int) (colLen + offset));
 	    } else {
 		if (dataType == SQL_C_CHAR) {
-		    Tcl_ExternalToUtfDString(NULL, (char*) colPtr,
+		    (void)Tcl_ExternalToUtfDString(NULL, (char*) colPtr,
 					     (int) (colLen + offset),
 					     &colDS);
 		} else {
@@ -5123,7 +5123,7 @@ DatasourceObjCmdW(
 	    case SQL_SUCCESS:
 		Tcl_DStringAppend(&retvalDS, sep, -1);
 		Tcl_DStringInit(&errorMessageDS);
-		Tcl_ExternalToUtfDString(NULL, errorMessage, errorMessageLen,
+		(void)	Tcl_ExternalToUtfDString(NULL, errorMessage, errorMessageLen,
 					 &errorMessageDS);
 		Tcl_DStringAppend(&retvalDS,
 				  Tcl_DStringValue(&errorMessageDS),
@@ -5262,7 +5262,7 @@ DatasourceObjCmdA(
     Tcl_DStringInit(&driverNameDS);
     p = Tcl_GetString(objv[2]);
     driverNameLen = objv[2]->length;
-    Tcl_UtfToExternalDString(NULL, p, driverNameLen, &driverNameDS);
+    (void)Tcl_UtfToExternalDString(NULL, p, driverNameLen, &driverNameDS);
     driverName = Tcl_DStringValue(&driverNameDS);
     driverNameLen = Tcl_DStringLength(&driverNameDS);
 
@@ -5283,7 +5283,7 @@ DatasourceObjCmdA(
     Tcl_DStringInit(&attributesDS);
     p = Tcl_GetString(attrObj);
     attrLen = attrObj->length;
-    Tcl_UtfToExternalDString(NULL, p, attrLen, &attributesDS);
+    (void)Tcl_UtfToExternalDString(NULL, p, attrLen, &attributesDS);
     attributes = Tcl_DStringValue(&attributesDS);
     attrLen = Tcl_DStringLength(&attributesDS);
     Tcl_DecrRefCount(attrObj);
@@ -5316,7 +5316,7 @@ DatasourceObjCmdA(
 	    case SQL_SUCCESS:
 		Tcl_DStringAppend(&retvalDS, sep, -1);
 		Tcl_DStringInit(&errorMessageDS);
-		Tcl_ExternalToUtfDString(NULL, errorMessage, errorMessageLen,
+		(void)Tcl_ExternalToUtfDString(NULL, errorMessage, errorMessageLen,
 					 &errorMessageDS);
 		Tcl_DStringAppend(&retvalDS,
 				  Tcl_DStringValue(&errorMessageDS),
