@@ -420,7 +420,7 @@ static int GetResultSetDescription(Tcl_Interp* interp, ResultSetData* rdata);
 static int ConfigureConnection(Tcl_Interp* interp,
 			       SQLHDBC hDBC,
 			       PerInterpData* pidata,
-			       int objc, Tcl_Obj *const objv[],
+			       size_t objc, Tcl_Obj *const objv[],
 			       SQLUSMALLINT* connectFlagsPtr,
 			       HWND* hParentWindowPtr);
 static int ConnectionConstructor(void *clientData, Tcl_Interp* interp,
@@ -1583,7 +1583,7 @@ ConfigureConnection(
     Tcl_Interp* interp,		/* Tcl interpreter */
     SQLHDBC hDBC,		/* Handle to the connection */
     PerInterpData* pidata,	/* Package-global data */
-    int objc,			/* Option count */
+    size_t objc,			/* Option count */
     Tcl_Obj *const objv[],	/* Option vector */
     SQLUSMALLINT* connectFlagsPtr,
 				/* Pointer to the driver connection options */
@@ -1617,7 +1617,7 @@ ConfigureConnection(
     Tcl_Encoding sysEncoding;	/* The system encoding */
     Tcl_Encoding newEncoding;	/* The requested encoding */
     const char* encName;	/* The name of the system encoding */
-    int i;
+    size_t i;
     int j;
     SQLINTEGER mode;		/* Access mode of the database */
     SQLSMALLINT isol;		/* Isolation level */
