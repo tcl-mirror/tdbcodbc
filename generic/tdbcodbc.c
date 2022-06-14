@@ -52,20 +52,6 @@
 #   endif
 #endif
 
-#if TCL_MAJOR_VERSION > 8
-#   define TDBCODBC_Z_MODIFIER TCL_Z_MODIFIER
-#else
-#   define TDBCODBC_Z_MODIFIER ""
-#endif
-
-#if !defined(ItclSizeT)
-    #if TCL_MAJOR_VERSION > 8
-	#define TdbcOdbcSizeT size_t
-    #else
-	#define TdbcOdbcSizeT int
-    #endif
-#endif
-
 /* Static data contained in this file */
 
 TCL_DECLARE_MUTEX(hEnvMutex);	/* Mutex protecting the environment handle
@@ -504,7 +490,7 @@ static int ResultSetNextresultsMethod(void *clientData, Tcl_Interp* interp,
 				      Tcl_ObjectContext context,
 				      int objc, Tcl_Obj *const objv[]);
 static int GetCell(ResultSetData* rdata, Tcl_Interp* interp,
-		   size_t columnIndex, Tcl_Obj** retval);
+		   int columnIndex, Tcl_Obj** retval);
 static int ResultSetRowcountMethod(void *clientData, Tcl_Interp* interp,
 				   Tcl_ObjectContext context,
 				   int objc, Tcl_Obj *const objv[]);
@@ -612,7 +598,7 @@ static const Tcl_MethodType ConnectionHasWvarcharMethodType = {
  * 'rollback' are all special because they have non-NULL clientData.
  */
 
-static const Tcl_MethodType* ConnectionMethods[] = {
+static const Tcl_MethodType* const ConnectionMethods[] = {
     &ConnectionBeginTransactionMethodType,
     &ConnectionConfigureMethodType,
     &ConnectionHasBigintMethodType,
@@ -659,7 +645,7 @@ static const Tcl_MethodType StatementParamtypeMethodType = {
  * Methods to create on the statement class.
  */
 
-static const Tcl_MethodType* StatementMethods[] = {
+static const Tcl_MethodType* const StatementMethods[] = {
     &StatementConnectionMethodType,
     &StatementParamListMethodType,
     &StatementParamtypeMethodType,
@@ -782,7 +768,7 @@ static const Tcl_MethodType ResultSetRowcountMethodType = {
 };
 
 
-static const Tcl_MethodType* ResultSetMethods[] = {
+static const Tcl_MethodType* const ResultSetMethods[] = {
     &ResultSetColumnsMethodType,
     &ResultSetNextresultsMethodType,
     &ResultSetRowcountMethodType,
@@ -813,32 +799,21 @@ DStringAppendWChars(
     SQLWCHAR* ws,		/* Input string */
     size_t len			/* Length of the input string in characters */
 ) {
-    size_t i;
+    size_t i, bytes;
     char buf[4] = "";
 
     if (sizeofSQLWCHAR == sizeof(unsigned short)) {
 	unsigned short* ptr16 = (unsigned short*) ws;
 
 	for (i = 0; i < len; ++i) {
-	    unsigned int ch;
-	    size_t bytes;
-
-	    ch = ptr16[i];
-	    bytes = Tcl_UniCharToUtf(ch, buf);
+	    bytes = Tcl_UniCharToUtf(ptr16[i], buf);
 	    Tcl_DStringAppend(ds, buf, bytes);
 	}
     } else {
-	unsigned int* ptr32 = (unsigned int*) ws;
+	int* ptr32 = (int*) ws;
 
 	for (i = 0; i < len; ++i) {
-	    unsigned int ch;
-	    size_t bytes;
-
-	    ch = ptr32[i];
-	    if (ch > 0x10ffff) {
-		ch = 0xfffd;
-	    }
-	    bytes = Tcl_UniCharToUtf(ch, buf);
+	    bytes = Tcl_UniCharToUtf(ptr32[i], buf);
 	    Tcl_DStringAppend(ds, buf, bytes);
 	}
     }
@@ -887,7 +862,7 @@ GetWCharStringFromObj(
 	unsigned short *ptr16 = (unsigned short*) wcPtr;
 
 	while (bytes < end) {
-	    unsigned int uch;
+	    int uch;
 
 	    if (Tcl_UtfCharComplete(bytes, end - bytes)) {
 		bytes += Tcl_UtfToUniChar(bytes, &ch);
@@ -908,10 +883,10 @@ GetWCharStringFromObj(
 	len = ptr16 - (unsigned short*) retval;
 	wcPtr = (SQLWCHAR*) ptr16;
     } else {
-	unsigned int *ptr32 = (unsigned int*) wcPtr;
+	int *ptr32 = (int*) wcPtr;
 
 	while (bytes < end) {
-	    unsigned int uch;
+	    int uch;
 
 	    if (Tcl_UtfCharComplete(bytes, end - bytes)) {
 		bytes += Tcl_UtfToUniChar(bytes, &ch);
@@ -934,7 +909,7 @@ GetWCharStringFromObj(
 	    *ptr32++ = uch;
 	}
 	*ptr32 = 0;
-	len = ptr32 - (unsigned int*) retval;
+	len = ptr32 - (int*) retval;
 	wcPtr = (SQLWCHAR*) ptr32;
     }
 
@@ -1251,8 +1226,7 @@ GetHEnv(
 	    sizeofSQLWCHAR = sizeof(SQLWCHAR);		/* fallback */
 	    rc = SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hDBC);
 	    if (SQL_SUCCEEDED(rc)) {
-		SQLSMALLINT infoLen;
-		int i;
+		SQLSMALLINT i, infoLen;
 		char info[64];
 
 		rc = SQLGetInfoW(hDBC, SQL_ODBC_VER, (SQLPOINTER) info,
@@ -1961,7 +1935,7 @@ ConnectionConstructor(
 				/* Per-interp data for the ODBC package */
     Tcl_Object thisObject = Tcl_ObjectContextObject(objectContext);
 				/* The current connection object */
-    size_t skip = Tcl_ObjectContextSkippedArgs(objectContext);
+    int skip = Tcl_ObjectContextSkippedArgs(objectContext);
 				/* Number of leading args to skip */
     SQLHDBC hDBC = SQL_NULL_HDBC;
 				/* Handle to the database connection */
@@ -1986,7 +1960,7 @@ ConnectionConstructor(
      * Check param count
      */
 
-    if ((size_t)objc < skip+1 || (((size_t)objc-skip) % 2) != 1) {
+    if (objc < skip+1 || ((objc-skip) % 2) != 1) {
 	Tcl_WrongNumArgs(interp, skip, objv,
 			 "connection-string ?-option value?...");
 	return TCL_ERROR;
@@ -2007,7 +1981,7 @@ ConnectionConstructor(
      * Grab configuration options.
      */
 
-    if ((size_t)objc > skip+1
+    if (objc > skip+1
 	&& ConfigureConnection(interp, hDBC, pidata, objc-skip-1, objv+skip+1,
 			       &connectFlags, &hParentWindow) != TCL_OK) {
 	SQLFreeHandle(SQL_HANDLE_DBC, hDBC);
@@ -2574,25 +2548,25 @@ StatementConstructor(
 ) {
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current statement object */
-    size_t skip = Tcl_ObjectContextSkippedArgs(context);
+    int skip = Tcl_ObjectContextSkippedArgs(context);
 				/* The number of args to skip */
     Tcl_Object connectionObject;
 				/* The database connection as a Tcl_Object */
     ConnectionData* cdata;	/* The connection object's data */
     StatementData* sdata;	/* The statement's object data */
     Tcl_Obj* tokens = NULL;	/* The tokens of the statement to be prepared */
-    TdbcOdbcSizeT tokenc;			/* Length of the 'tokens' list */
+    int tokenc;			/* Length of the 'tokens' list */
     Tcl_Obj** tokenv;		/* Exploded tokens from the list */
     Tcl_Obj* nativeSql;		/* SQL statement mapped to ODBC form */
     char* tokenStr;		/* Token string */
     size_t tokenLen;		/* Length of a token */
     RETCODE rc;			/* Return code from ODBC */
     SQLSMALLINT nParams;	/* Number of parameters in the ODBC statement */
-    TdbcOdbcSizeT i, j;
+    int i, j;
 
     /* Find the connection object, and get its data. */
 
-    if ((size_t)objc != skip+2) {
+    if (objc != skip+2) {
 	Tcl_WrongNumArgs(interp, skip, objv, "connection statementText");
 	return TCL_ERROR;
     }
@@ -2825,8 +2799,8 @@ StatementParamListMethod(
 				/* The current statement object */
     StatementData* sdata;	/* The current statement */
     Tcl_Obj **paramNames;	/* Parameter list to the current statement */
-    TdbcOdbcSizeT nParams;	/* Parameter count for the current statement */
-    TdbcOdbcSizeT i;		/* Current parameter index */
+    int nParams;	/* Parameter count for the current statement */
+    int i;		/* Current parameter index */
     Tcl_Obj* retval;		/* Return value from this command */
 
     sdata = (StatementData*) Tcl_ObjectGetMetadata(thisObject,
@@ -2882,13 +2856,13 @@ StatementParamtypeMethod(
     StatementData* sdata;	/* The current statement */
     int matchCount = 0;		/* The number of variables in the given
 				 * statement that match the given one */
-    TdbcOdbcSizeT nParams;		/* Number of parameters to the statement */
+    int nParams;		/* Number of parameters to the statement */
     const char* paramName;	/* Name of the parameter being set */
     Tcl_Obj* targetNameObj;	/* Name of the ith parameter in the statement */
     const char* targetName;	/* Name of a candidate parameter in the
 				 * statement */
     Tcl_Obj* errorObj;		/* Error message */
-    TdbcOdbcSizeT i;
+    int i;
     SQLSMALLINT dir = PARAM_IN | PARAM_KNOWN;
 				/* Direction of parameter transmssion */
     SQLSMALLINT odbcType = SQL_VARCHAR;
@@ -3009,7 +2983,7 @@ TablesStatementConstructor(
 
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current statement object */
-    size_t skip = Tcl_ObjectContextSkippedArgs(context);
+    int skip = Tcl_ObjectContextSkippedArgs(context);
 				/* The number of initial args to this call */
     Tcl_Object connectionObject;
 				/* The database connection as a Tcl_Object */
@@ -3019,7 +2993,7 @@ TablesStatementConstructor(
 
     /* Find the connection object, and get its data. */
 
-    if ((size_t)objc != skip+2) {
+    if (objc != skip+2) {
 	Tcl_WrongNumArgs(interp, skip, objv, "connection pattern");
 	return TCL_ERROR;
     }
@@ -3109,7 +3083,7 @@ ColumnsStatementConstructor(
 
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current statement object */
-    size_t skip = Tcl_ObjectContextSkippedArgs(context);
+    int skip = Tcl_ObjectContextSkippedArgs(context);
 				/* The number of parameters to skip */
     Tcl_Object connectionObject;
 				/* The database connection as a Tcl_Object */
@@ -3120,7 +3094,7 @@ ColumnsStatementConstructor(
 
     /* Check param count */
 
-    if ((size_t)objc != skip+3) {
+    if (objc != skip+3) {
 	Tcl_WrongNumArgs(interp, skip, objv, "connection tableName pattern");
 	return TCL_ERROR;
     }
@@ -3212,7 +3186,7 @@ PrimarykeysStatementConstructor(
 
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current statement object */
-    size_t skip = Tcl_ObjectContextSkippedArgs(context);
+    int skip = Tcl_ObjectContextSkippedArgs(context);
 				/* The number of parameters to skip */
     Tcl_Object connectionObject;
 				/* The database connection as a Tcl_Object */
@@ -3223,7 +3197,7 @@ PrimarykeysStatementConstructor(
 
     /* Check param count */
 
-    if ((size_t)objc != skip+2) {
+    if (objc != skip+2) {
 	Tcl_WrongNumArgs(interp, skip, objv, "connection tableName");
 	return TCL_ERROR;
     }
@@ -3314,7 +3288,7 @@ ForeignkeysStatementConstructor(
 
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current statement object */
-    size_t skip = Tcl_ObjectContextSkippedArgs(context);
+    int skip = Tcl_ObjectContextSkippedArgs(context);
 				/* The number of parameters to skip */
     Tcl_Object connectionObject;
 				/* The database connection as a Tcl_Object */
@@ -3342,7 +3316,7 @@ ForeignkeysStatementConstructor(
 
     /* Check param count */
 
-    if ((size_t)objc < skip+1 || ((size_t)objc-skip) % 2 != 1) {
+    if (objc < skip+1 || (objc-skip) % 2 != 1) {
 	Tcl_WrongNumArgs(interp, skip, objv, "connection ?-option value?...");
 	return TCL_ERROR;
     }
@@ -3370,7 +3344,7 @@ ForeignkeysStatementConstructor(
     /* Absorb parameters */
 
     have[OPT_FOREIGN] = have[OPT_PRIMARY] = 0;
-    for (i = skip+1; i+1 < (size_t)objc; i+=2) {
+    for (i = skip+1; i+1 < objc; i+=2) {
 	if (Tcl_GetIndexFromObjStruct(interp, objv[i], options, sizeof(char *),
 				"option", 0, &paramIdx) != TCL_OK) {
 	    goto freeSData;
@@ -3455,7 +3429,7 @@ TypesStatementConstructor(
 
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current statement object */
-    size_t skip = Tcl_ObjectContextSkippedArgs(context);
+    int skip = Tcl_ObjectContextSkippedArgs(context);
 				/* The number of leading args to skip */
     Tcl_Object connectionObject;
 				/* The database connection as a Tcl_Object */
@@ -3466,9 +3440,9 @@ TypesStatementConstructor(
 
     /* Parse args */
 
-    if ((size_t)objc == skip+1) {
+    if (objc == skip+1) {
 	typeNum = SQL_ALL_TYPES;
-    } else if ((size_t)objc == skip+2) {
+    } else if (objc == skip+2) {
 	if (Tcl_GetIntFromObj(interp, objv[skip+1], &typeNum) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -3631,14 +3605,14 @@ ResultSetConstructor(
 
     Tcl_Object thisObject = Tcl_ObjectContextObject(context);
 				/* The current result set object */
-    size_t skip = Tcl_ObjectContextSkippedArgs(context);
+    int skip = Tcl_ObjectContextSkippedArgs(context);
 				/* Number of skipped args in the
 				 * method invocation */
     Tcl_Object statementObject;	/* The current statement object */
     ConnectionData* cdata;	/* The ODBC connection object's data */
     StatementData* sdata;	/* The statement object's data */
     ResultSetData* rdata;	/* THe result set object's data */
-    TdbcOdbcSizeT nParams;		/* Number of substituted parameters in
+    int nParams;		/* Number of substituted parameters in
 				 * the statement */
     int nBound;			/* Number of substituted parameters that
 				 * have been bound successfully */
@@ -3655,11 +3629,11 @@ ResultSetConstructor(
     SQLRETURN rc;		/* Return code from ODBC calls */
     unsigned char* byteArrayPtr; /* Pointer to a BINARY or VARBINARY
 				 * parameter, expressed as a byte array.*/
-    TdbcOdbcSizeT i;
+    int i;
 
     /* Check parameter count */
 
-    if ((size_t)objc != skip+1 && (size_t)objc != skip+2) {
+    if (objc != skip+1 && objc != skip+2) {
 	Tcl_WrongNumArgs(interp, skip, objv, "statement ?dictionary?");
 	return TCL_ERROR;
     }
@@ -3739,7 +3713,7 @@ ResultSetConstructor(
     for (nBound = 0; nBound < nParams; ++nBound) {
 	Tcl_ListObjIndex(NULL, sdata->subVars, nBound, &paramNameObj);
 	paramName = Tcl_GetString(paramNameObj);
-	if ((size_t)objc == skip+2) {
+	if (objc == skip+2) {
 
 	    /* Param from a dictionary */
 
@@ -4177,7 +4151,7 @@ ResultSetNextrowMethod(
     Tcl_Obj** literals = pidata->literals;
 				/* Literal pool */
 
-    TdbcOdbcSizeT nColumns;		/* Number of columns in the result set */
+    int nColumns;		/* Number of columns in the result set */
     Tcl_Obj* colName;		/* Name of the current column */
     Tcl_Obj* resultRow;		/* Row of the result set under construction */
 
@@ -4185,7 +4159,7 @@ ResultSetNextrowMethod(
     SQLRETURN rc;		/* Return code from ODBC operations */
     int status = TCL_ERROR;	/* Status return from this command */
 
-    TdbcOdbcSizeT i;
+    int i;
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "varName");
@@ -4278,7 +4252,7 @@ static int
 GetCell(
     ResultSetData* rdata,	/* Instance data for the result set */
     Tcl_Interp* interp,		/* Tcl interpreter */
-    size_t i,			/* Column position */
+    int i,			/* Column position */
     Tcl_Obj** colObjPtr		/* Returned: Tcl_Obj containing the content
 				 * or NULL */
 ) {
@@ -4349,7 +4323,7 @@ GetCell(
 			(SQLPOINTER) &colWide, sizeof(colWide), &colLen);
 	if (!SQL_SUCCEEDED(rc)) {
 	    char info[80];
-	    sprintf(info, "(retrieving result set column #%" TDBCODBC_Z_MODIFIER "u)\n", i+1);
+	    sprintf(info, "(retrieving result set column #%d)\n", i+1);
 	    TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt, info);
 	    return TCL_ERROR;
 	}
@@ -4369,7 +4343,7 @@ GetCell(
 			(SQLPOINTER) &colLong, sizeof(colLong), &colLen);
 	if (!SQL_SUCCEEDED(rc)) {
 	    char info[80];
-	    sprintf(info, "(retrieving result set column #%" TDBCODBC_Z_MODIFIER "u)\n", i+1);
+	    sprintf(info, "(retrieving result set column #%d)\n", i+1);
 	    TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt, info);
 	    ckfree(info);
 	    return TCL_ERROR;
@@ -4403,7 +4377,7 @@ GetCell(
 			&colLen);
 	if (!SQL_SUCCEEDED(rc)) {
 	    char info[80];
-	    sprintf(info, "(retrieving result set column #%" TDBCODBC_Z_MODIFIER "u)\n", i+1);
+	    sprintf(info, "(retrieving result set column #%d)\n", i+1);
 	    TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt, info);
 	    ckfree(info);
 	    return TCL_ERROR;
@@ -4495,7 +4469,7 @@ GetCell(
 	} while (retry);
 	if (!SQL_SUCCEEDED(rc)) {
 	    char info[80];
-	    sprintf(info, "(retrieving result set column #%" TDBCODBC_Z_MODIFIER "u)\n", i+1);
+	    sprintf(info, "(retrieving result set column #%d)\n", i+1);
 	    TransferSQLError(interp, SQL_HANDLE_STMT, rdata->hStmt, info);
 	    if (colPtr != colBuf) {
 		ckfree((char*) colPtr);
@@ -4506,16 +4480,14 @@ GetCell(
 	    Tcl_DStringInit(&colDS);
 	    if (dataType == SQL_C_BINARY) {
 		colObj = Tcl_NewByteArrayObj((const unsigned char*) colPtr,
-					     (int) (colLen + offset));
+					     colLen + offset);
 	    } else {
 		if (dataType == SQL_C_CHAR) {
 		    (void)Tcl_ExternalToUtfDString(NULL, (char*) colPtr,
-					     (int) (colLen + offset),
-					     &colDS);
+					     colLen + offset, &colDS);
 		} else {
 		    DStringAppendWChars(&colDS, (SQLWCHAR*) colPtr,
-					(int)((colLen + offset)
-					      / sizeofSQLWCHAR));
+					(colLen + offset)/ sizeofSQLWCHAR);
 		}
 		colObj = Tcl_NewStringObj(Tcl_DStringValue(&colDS),
 					  Tcl_DStringLength(&colDS));
@@ -4666,8 +4638,8 @@ static void
 FreeBoundParameters(
     ResultSetData* rdata	/* Result set being abandoned */
 ) {
-    TdbcOdbcSizeT nParams;
-    TdbcOdbcSizeT i;
+    int nParams;
+    int i;
     if (rdata->bindStrings != NULL) {
 	Tcl_ListObjLength(NULL, rdata->sdata->subVars, &nParams);
 	for (i = 0; i < nParams; ++i) {
