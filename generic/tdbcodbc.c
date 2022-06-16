@@ -4412,7 +4412,10 @@ GetCell(
 				/* Current allocated size of the buffer,
 				 * in bytes */
     SQLLEN colLen;		/* Actual size of the return value, in bytes */
-    SQLINTEGER colLong;		/* Integer value of the column */
+    union {			/* Integer value of the column */
+	SQLINTEGER si;		/*   this holds a 'long' */
+	int i;			/*   but some drivers return 'int' */
+    } colLong;
     SQLBIGINT colWide;		/* Wide-integer value of the column */
     SQLDOUBLE colDouble;	/* Double value of the column */
     Tcl_DString colDS;		/* Column expressed as a Tcl_DString */
@@ -4479,9 +4482,9 @@ GetCell(
     case SQL_TINYINT:
     convertLong:
 	/* An integer no larger than 'long' */
-	colLen = sizeof(colLong); colLong = 0;
+	colLen = sizeof(colLong.si); colLong.si = 0;
 	rc = SQLGetData(rdata->hStmt, i+1, SQL_C_SLONG,
-			(SQLPOINTER) &colLong, sizeof(colLong), &colLen);
+			(SQLPOINTER) &colLong.si, sizeof(colLong.si), &colLen);
 	if (!SQL_SUCCEEDED(rc)) {
 	    char info[80];
 	    sprintf(info, "(retrieving result set column #%d)\n", i+1);
@@ -4490,7 +4493,11 @@ GetCell(
 	    return TCL_ERROR;
 	}
 	if (colLen != SQL_NULL_DATA && colLen != SQL_NO_TOTAL) {
-	    colObj = Tcl_NewWideIntObj(colLong);
+	    if (colLen != sizeof(colLong.si)) {
+		colObj = Tcl_NewWideIntObj(colLong.i);
+	    } else {
+		colObj = Tcl_NewWideIntObj(colLong.si);
+	    }
 	}
 	break;
 
