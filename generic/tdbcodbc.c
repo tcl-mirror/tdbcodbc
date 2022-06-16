@@ -252,7 +252,7 @@ typedef struct StatementData {
 				 * asking for primary key metadata */
 #define STATEMENT_FLAG_EVALDIRECT  0x80
 				/* This flag is set if the statement is
-				 * asking for direct execution (no prepare 
+				 * asking for direct execution (no prepare
 				 * or variable substitution) */
 
 /*
@@ -725,7 +725,7 @@ static const Tcl_MethodType ForeignkeysStatementConstructorType = {
  * variable substitutions.
  */
 
-const static Tcl_MethodType EvaldirectStatementConstructorType = {
+static const Tcl_MethodType EvaldirectStatementConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
 				/* version */
     "CONSTRUCTOR",		/* name */
@@ -3428,7 +3428,7 @@ ForeignkeysStatementConstructor(
  *	ODBC query that is not tokenized or prepared.
  *
  * Parameters:
- *	Accepts a 4-element 'objv': 
+ *	Accepts a 4-element 'objv':
  *		columnsStatement new $connection $sqlStatement,
  *	where $connection is the ODBC connection object and $sqlStatement is
  *	the driver-native SQL to be executed.
@@ -3437,8 +3437,8 @@ ForeignkeysStatementConstructor(
  *	Returns a standard Tcl result
  *
  * Side effects:
- *	Creates an ODBC statement, and stores it (plus a copy of the 
- *	driver-native sqlStatement a reference to the connection) in 
+ *	Creates an ODBC statement, and stores it (plus a copy of the
+ *	driver-native sqlStatement a reference to the connection) in
  *	instance metadata.
  *
  *-----------------------------------------------------------------------------
@@ -3471,7 +3471,7 @@ EvaldirectStatementConstructor(
 	return TCL_ERROR;
     }
 
-    /* Do not initialize superclasses; this constructor overrides 
+    /* Do not initialize superclasses; this constructor overrides
      * StatementConstructor so that the SQL is not tokenizer or prepared. */
 
     /* Find the connection object, and get its data. */
@@ -3498,12 +3498,12 @@ EvaldirectStatementConstructor(
 
     rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &(sdata->hStmt));
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC, 
+	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
 			 "(allocating statement handle)");
 	goto freeSData;
     }
 
-    /* 
+    /*
      * Stash the sqlStatement and set a flag to indicate direct execution.
      */
 
@@ -4068,7 +4068,7 @@ ResultSetConstructor(
 			     sdata->nativeMatchPatternW,
 			     sdata->nativeMatchPatLen);
     } else if (sdata->flags & STATEMENT_FLAG_EVALDIRECT) {
-	rc = SQLExecDirectW(rdata->hStmt, sdata->nativeSqlW, 
+	rc = SQLExecDirectW(rdata->hStmt, sdata->nativeSqlW,
 			    sdata->nativeSqlLen);
     } else {
 	rc = SQLExecute(rdata->hStmt);

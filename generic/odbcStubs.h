@@ -78,4 +78,3 @@ typedef struct odbcStubDefs {
 #define SQLTablesW (odbcStubs->SQLTablesWPtr)
 #define SQLExecDirectW (odbcStubs->SQLExecDirectWPtr)
 MODULE_SCOPE const odbcStubDefs *odbcStubs;
-s
