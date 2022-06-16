@@ -793,6 +793,10 @@ static const Tcl_MethodType* const ResultSetMethods[] = {
  *-----------------------------------------------------------------------------
  */
 
+#ifndef TCL_COMBINE /* TIP #619 */
+#   define TCL_COMBINE 0
+#endif
+
 static void
 DStringAppendWChars(
     Tcl_DString* ds,		/* Output string */
@@ -806,7 +810,7 @@ DStringAppendWChars(
 	unsigned short* ptr16 = (unsigned short*) ws;
 
 	for (i = 0; i < len; ++i) {
-	    bytes = Tcl_UniCharToUtf(ptr16[i], buf);
+	    bytes = Tcl_UniCharToUtf(ptr16[i]|TCL_COMBINE, buf);
 	    Tcl_DStringAppend(ds, buf, bytes);
 	}
     } else {
