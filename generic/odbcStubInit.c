@@ -89,6 +89,7 @@ static const char *const odbcSymbolNames[] = {
     "SQLSetConnectOption",
     "SQLSetEnvAttr",
     "SQLTablesW",
+    "SQLExecDirectW",
     NULL
     /* @END@ */
 };
