@@ -251,9 +251,9 @@ typedef struct StatementData {
 				/* This flag is set if the statement is
 				 * asking for primary key metadata */
 #define STATEMENT_FLAG_EVALDIRECT  0x80
-                                /* This flag is set if the statement is
-                                 * asking for direct execution (no prepare
-                                 * or variable substitution) */
+				/* This flag is set if the statement is
+				 * asking for direct execution (no prepare
+				 * or variable substitution) */
 
 /*
  * Structure describing the data types of substituted parameters in
@@ -440,7 +440,7 @@ static int SetAutocommitFlag(Tcl_Interp* interp, ConnectionData* cdata,
 			     SQLINTEGER flag);
 static void DeleteCmd(void *clientData);
 static int CloneCmd(Tcl_Interp* interp,
-		    void *oldMetadata, void ** newMetadata);
+		    void *oldMetadata, void **newMetadata);
 static void DeleteConnectionMetadata(void *clientData);
 static void DeleteConnection(ConnectionData* cdata);
 static int CloneConnection(Tcl_Interp* interp, void *oldClientData,
@@ -475,9 +475,9 @@ static int ForeignkeysStatementConstructor(void *clientData,
 					   Tcl_ObjectContext context,
 					   int objc, Tcl_Obj *const objv[]);
 static int EvaldirectStatementConstructor(void *clientData,
-                                           Tcl_Interp* interp,
-                                           Tcl_ObjectContext context,
-                                           int objc, Tcl_Obj *const objv[]);
+					   Tcl_Interp* interp,
+					   Tcl_ObjectContext context,
+					   int objc, Tcl_Obj *const objv[]);
 static int TypesStatementConstructor(void *clientData, Tcl_Interp* interp,
 				     Tcl_ObjectContext context,
 				     int objc, Tcl_Obj *const objv[]);
@@ -727,12 +727,12 @@ static const Tcl_MethodType ForeignkeysStatementConstructorType = {
 
 static const Tcl_MethodType EvaldirectStatementConstructorType = {
     TCL_OO_METHOD_VERSION_CURRENT,
-                                /* version */
-    "CONSTRUCTOR",              /* name */
+				/* version */
+    "CONSTRUCTOR",		/* name */
     EvaldirectStatementConstructor,
-                                /* callProc */
-    NULL,                       /* deleteProc */
-    NULL                        /* cloneProc */
+				/* callProc */
+    NULL,			/* deleteProc */
+    NULL			/* cloneProc */
 };
 
 /*
@@ -2428,7 +2428,7 @@ CloneCmd(
     TCL_UNUSED(void *),		/* Environment handle to be discarded */
     void **newClientData	/* New environment handle to be used */
 ) {
-    *newClientData= GetHEnv(NULL);
+    *newClientData = GetHEnv(NULL);
     return TCL_OK;
 }
 
@@ -2751,112 +2751,7 @@ StatementConstructor(
     DecrStatementRefCount(sdata);
     return TCL_ERROR;
 }
-/*
- *-----------------------------------------------------------------------------
- * EvaldirectStatementConstructor --
- *
- *	C-level initialization for the object representing a a driver-native
- *	ODBC query that is not tokenized or prepared.
- *
- * Parameters:
- *	Accepts a 4-element 'objv':
- *		columnsStatement new $connection $sqlStatement,
- *	where $connection is the ODBC connection object and $sqlStatement is
- *	the driver-native SQL to be executed.
- *
- * Results:
- *	Returns a standard Tcl result
- *
- * Side effects:
- *	Creates an ODBC statement, and stores it (plus a copy of the
- *	driver-native sqlStatement a reference to the connection) in
- *	instance metadata.
- *
- *-----------------------------------------------------------------------------
- */
-static int
-EvaldirectStatementConstructor(
-    void *clientData,	/* Not used */
-    Tcl_Interp* interp,		/* Tcl interpreter */
-    Tcl_ObjectContext context,	/* Object context  */
-    int objc, 			/* Parameter count */
-    Tcl_Obj *const objv[]	/* Parameter vector */
-) {
-
-    Tcl_Object thisObject = Tcl_ObjectContextObject(context);
-				/* The current statement object */
-    int skip = Tcl_ObjectContextSkippedArgs(context);
-				/* The number of parameters to skip */
-    Tcl_Object connectionObject;
-				/* The database connection as a Tcl_Object */
-    ConnectionData* cdata;	/* The connection object's data */
-    StatementData* sdata;	/* The statement's object data */
-    RETCODE rc;			/* Return code from ODBC */
-
-
-    /* Check param count */
-
-    if (objc != skip+2) {
-	Tcl_WrongNumArgs(interp, skip, objv, "connection sqlStatement");
-	return TCL_ERROR;
-    }
-
-    /* Do not initialize superclasses; this constructor overrides
-     * StatementConstructor so that the SQL is not tokenizer or prepared. */
-
-    /* Find the connection object, and get its data. */
-
-    connectionObject = Tcl_GetObjectFromObj(interp, objv[skip]);
-    if (connectionObject == NULL) {
-	return TCL_ERROR;
-    }
-    cdata = (ConnectionData*) Tcl_ObjectGetMetadata(connectionObject,
-						    &connectionDataType);
-    if (cdata == NULL) {
-	Tcl_AppendResult(interp, Tcl_GetString(objv[skip]),
-			 " does not refer to an ODBC connection", NULL);
-	return TCL_ERROR;
-    }
-
-    /*
-     * Allocate an object to hold data about this statement
-     */
-
-    sdata = NewStatement(cdata, connectionObject);
-
-    /* Allocate an ODBC statement handle */
-
-    rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &(sdata->hStmt));
-    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
-	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
-			 "(allocating statement handle)");
-	goto freeSData;
-    }
-
-    /*
-     * Stash the sqlStatement and set a flag to indicate direct execution.
-     */
-
-    sdata->nativeSqlW = GetWCharStringFromObj(objv[skip+1],
-					      &(sdata->nativeSqlLen));
-    sdata->flags = STATEMENT_FLAG_EVALDIRECT;
-
-    /* Attach the current statement data as metadata to the current object */
-
-    Tcl_ObjectSetMetadata(thisObject, &statementDataType, (void *) sdata);
-
-    /* Statement will be executed when the statement object's resultSetCreate
-     * is called (e.g. via $statement allrows).  In this statement
-     * resultSetCreate forwards to ResultSetConstructor. */
-
-    return TCL_OK;
-
-    /* On error, unwind all the resource allocations */
-
- freeSData:
-    DecrStatementRefCount(sdata);
-    return TCL_ERROR;
-}
+
 /*
  *-----------------------------------------------------------------------------
  *
@@ -3527,6 +3422,115 @@ ForeignkeysStatementConstructor(
 /*
  *-----------------------------------------------------------------------------
  *
+ * EvaldirectStatementConstructor --
+ *
+ *	C-level initialization for the object representing a a driver-native
+ *	ODBC query that is not tokenized or prepared.
+ *
+ * Parameters:
+ *	Accepts a 4-element 'objv':
+ *		columnsStatement new $connection $sqlStatement,
+ *	where $connection is the ODBC connection object and $sqlStatement is
+ *	the driver-native SQL to be executed.
+ *
+ * Results:
+ *	Returns a standard Tcl result
+ *
+ * Side effects:
+ *	Creates an ODBC statement, and stores it (plus a copy of the
+ *	driver-native sqlStatement a reference to the connection) in
+ *	instance metadata.
+ *
+ *-----------------------------------------------------------------------------
+ */
+
+static int
+EvaldirectStatementConstructor(
+    void *clientData,	/* Not used */
+    Tcl_Interp* interp,		/* Tcl interpreter */
+    Tcl_ObjectContext context,	/* Object context  */
+    int objc, 			/* Parameter count */
+    Tcl_Obj *const objv[]	/* Parameter vector */
+) {
+
+    Tcl_Object thisObject = Tcl_ObjectContextObject(context);
+				/* The current statement object */
+    int skip = Tcl_ObjectContextSkippedArgs(context);
+				/* The number of parameters to skip */
+    Tcl_Object connectionObject;
+				/* The database connection as a Tcl_Object */
+    ConnectionData* cdata;	/* The connection object's data */
+    StatementData* sdata;	/* The statement's object data */
+    RETCODE rc;			/* Return code from ODBC */
+
+
+    /* Check param count */
+
+    if (objc != skip+2) {
+	Tcl_WrongNumArgs(interp, skip, objv, "connection sqlStatement");
+	return TCL_ERROR;
+    }
+
+    /* Do not initialize superclasses; this constructor overrides
+     * StatementConstructor so that the SQL is not tokenizer or prepared. */
+
+    /* Find the connection object, and get its data. */
+
+    connectionObject = Tcl_GetObjectFromObj(interp, objv[skip]);
+    if (connectionObject == NULL) {
+	return TCL_ERROR;
+    }
+    cdata = (ConnectionData*) Tcl_ObjectGetMetadata(connectionObject,
+						    &connectionDataType);
+    if (cdata == NULL) {
+	Tcl_AppendResult(interp, Tcl_GetString(objv[skip]),
+			 " does not refer to an ODBC connection", NULL);
+	return TCL_ERROR;
+    }
+
+    /*
+     * Allocate an object to hold data about this statement
+     */
+
+    sdata = NewStatement(cdata, connectionObject);
+
+    /* Allocate an ODBC statement handle */
+
+    rc = SQLAllocHandle(SQL_HANDLE_STMT, cdata->hDBC, &(sdata->hStmt));
+    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
+	TransferSQLError(interp, SQL_HANDLE_DBC, cdata->hDBC,
+			 "(allocating statement handle)");
+	goto freeSData;
+    }
+
+    /*
+     * Stash the sqlStatement and set a flag to indicate direct execution.
+     */
+
+    sdata->nativeSqlW = GetWCharStringFromObj(objv[skip+1],
+					      &(sdata->nativeSqlLen));
+    sdata->flags = STATEMENT_FLAG_EVALDIRECT;
+
+    /* Attach the current statement data as metadata to the current object */
+
+    Tcl_ObjectSetMetadata(thisObject, &statementDataType, (void *) sdata);
+
+    /* Statement will be executed when the statement object's resultSetCreate
+     * is called (e.g. via $statement allrows).  In this statement
+     * resultSetCreate forwards to ResultSetConstructor. */
+
+    return TCL_OK;
+
+    /* On error, unwind all the resource allocations */
+
+ freeSData:
+    DecrStatementRefCount(sdata);
+    return TCL_ERROR;
+}
+
+/*
+ *-----------------------------------------------------------------------------
+ *
  * TypesStatementConstructor --
  *
  *	C-level initialization for the object representing an ODBC query
@@ -4063,10 +4067,9 @@ ResultSetConstructor(
 			     NULL, 0, NULL, 0,
 			     sdata->nativeMatchPatternW,
 			     sdata->nativeMatchPatLen);
-	} else if (sdata->flags & STATEMENT_FLAG_EVALDIRECT) {
-        rc = SQLExecDirectW(rdata->hStmt, sdata->nativeSqlW,
-                            sdata->nativeSqlLen);
-
+    } else if (sdata->flags & STATEMENT_FLAG_EVALDIRECT) {
+	rc = SQLExecDirectW(rdata->hStmt, sdata->nativeSqlW,
+			    sdata->nativeSqlLen);
     } else {
 	rc = SQLExecute(rdata->hStmt);
     }
@@ -5720,17 +5723,6 @@ Tdbcodbc_Init(
 					  &PrimarykeysStatementConstructorType,
 					  NULL));
 
-    /* Look up the 'typesStatement' class */
-
-    nameObj = Tcl_NewStringObj("::tdbc::odbc::typesStatement", -1);
-    Tcl_IncrRefCount(nameObj);
-    if ((curClassObject = Tcl_GetObjectFromObj(interp, nameObj)) == NULL) {
-	Tcl_DecrRefCount(nameObj);
-	return TCL_ERROR;
-    }
-    Tcl_DecrRefCount(nameObj);
-    curClass = Tcl_GetObjectAsClass(curClassObject);
-
     /* Look up the 'foreignkeysStatement' class */
 
     nameObj = Tcl_NewStringObj("::tdbc::odbc::foreignkeysStatement", -1);
@@ -5754,8 +5746,8 @@ Tdbcodbc_Init(
     nameObj = Tcl_NewStringObj("::tdbc::odbc::evaldirectStatement", -1);
     Tcl_IncrRefCount(nameObj);
     if ((curClassObject = Tcl_GetObjectFromObj(interp, nameObj)) == NULL) {
-        Tcl_DecrRefCount(nameObj);
-        return TCL_ERROR;
+	Tcl_DecrRefCount(nameObj);
+	return TCL_ERROR;
     }
     Tcl_DecrRefCount(nameObj);
     curClass = Tcl_GetObjectAsClass(curClassObject);
@@ -5763,9 +5755,9 @@ Tdbcodbc_Init(
     /* Attach the constructor to the 'evaldirectStatement' class */
 
     Tcl_ClassSetConstructor(interp, curClass,
-                            Tcl_NewMethod(interp, curClass, NULL, 1,
-                                          &EvaldirectStatementConstructorType,
-                                          (void *) NULL));
+			    Tcl_NewMethod(interp, curClass, NULL, 1,
+					  &EvaldirectStatementConstructorType,
+					  (void *) NULL));
 
     /* Look up the 'typesStatement' class */
 

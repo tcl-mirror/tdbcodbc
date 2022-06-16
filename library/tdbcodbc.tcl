@@ -221,17 +221,17 @@ package require tdbc
 	return -level 0 -options $options $result
     }
 
-     # The 'evaldirect' evaluates driver-native SQL code without preparing it,
+    # The 'evaldirect' evaluates driver-native SQL code without preparing it,
     # and returns a list of dicts (similar to '$connection allrows -as dicts').
 
     method evaldirect {sqlStatement} {
-        set stmt [::tdbc::odbc::evaldirectStatement create \
-                      Stmt::[incr statementSeq] [self] $sqlStatement]
-        set status [catch {
-            $stmt allrows -as dicts
-        } result options]
-        catch {rename $stmt {}}
-        return -level 0 -options $options $result
+	set stmt [::tdbc::odbc::evaldirectStatement create \
+		      Stmt::[incr statementSeq] [self] $sqlStatement]
+       	set status [catch {
+	    $stmt allrows -as dicts
+	} result options]
+	catch {rename $stmt {}}
+	return -level 0 -options $options $result
     }
 
     # The 'prepareCall' method gives a portable interface to prepare
@@ -463,13 +463,14 @@ oo::class create ::tdbc::odbc::foreignkeysStatement {
     forward resultSetCreate ::tdbc::odbc::resultset create
 
 }
+
 #------------------------------------------------------------------------------
 #
 # tdbc::odbc::evaldirectStatement --
 #
-#       The class 'tdbc::odbc::evaldirectStatement' provides a mechanism to
-#       execute driver-name SQL code through an ODBC connection.  The SQL code
-#       is not prepared and no tokenization or variable substitution is done.
+#	The class 'tdbc::odbc::evaldirectStatement' provides a mechanism to
+#	execute driver-name SQL code through an ODBC connection.  The SQL code
+#	is not prepared and no tokenization or variable substitution is done.
 #
 #------------------------------------------------------------------------------
 
